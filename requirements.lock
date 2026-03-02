@@ -3,7 +3,7 @@
 alembic==1.18.1 \
     --hash=sha256:83ac6b81359596816fb3b893099841a0862f2117b2963258e965d70dc62fb866 \
     --hash=sha256:f1c3b0920b87134e851c25f1f7f236d8a332c34b75416802d06971df5d1b7810
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 annotated-types==0.7.0 \
     --hash=sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53 \
     --hash=sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89
@@ -11,7 +11,7 @@ annotated-types==0.7.0 \
 anthropic==0.67.0 \
     --hash=sha256:d1531b210ea300c73423141d29bcee20fcd24ef9f426f6437c0a5d93fc98fb8e \
     --hash=sha256:f80a81ec1132c514215f33d25edeeab1c4691ad5361b391ebb70d528b0605b55
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 anyio==4.12.0 \
     --hash=sha256:73c693b567b0c55130c104d0b43a9baf3aa6a31fc6110116509f27bf75e21ec0 \
     --hash=sha256:dad2376a628f98eeca4881fc56cd06affd18f659b17a747d3ff0307ced94b1bb
@@ -23,7 +23,7 @@ anyio==4.12.0 \
 boto3==1.40.30 \
     --hash=sha256:04e89abf61240857bf7dec160e22f097eec68c502509b2bb3c5010a22cb91052 \
     --hash=sha256:e95db539c938710917f4cb4fc5915f71b27f2c836d949a1a95df7895d2e9ec8b
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 botocore==1.40.30 \
     --hash=sha256:1d87874ad81234bec3e83f9de13618f67ccdfefd08d6b8babc041cd45007447e \
     --hash=sha256:8a74f77cfe5c519826d22f7613f89544cbb8491a1a49d965031bd997f89a8e3f
@@ -177,7 +177,7 @@ docstring-parser==0.17.0 \
 fastapi==0.115.0 \
     --hash=sha256:17ea427674467486e997206a5ab25760f6b09e069f099b96f5b55a32fb6f1631 \
     --hash=sha256:f93b4ca3529a8ebc6fc3fcf710e5efa8de3df9b41570958abf1d97d843138004
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 google-ai-generativelanguage==0.6.15 \
     --hash=sha256:5a03ef86377aa184ffef3662ca28f19eeee158733e45d7947982eb953c6ebb6c \
     --hash=sha256:8f6d9dc4c12b065fe2d0289026171acea5183ebf2d0b11cefe12f3821e159ec3
@@ -220,7 +220,7 @@ google-auth-httplib2==0.2.0 \
 google-cloud-aiplatform==1.113.0 \
     --hash=sha256:7fe360630c38df63e7543ae4fd15ad45bc5382ed14dbf979fda0f89c44dd235f \
     --hash=sha256:d24b6fc353f89f59d4cdb6b6321e21c59a34a1a831b8ab1dd5029ea6b8f19823
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 google-cloud-bigquery==3.37.0 \
     --hash=sha256:4f8fe63f5b8d43abc99ce60b660d3ef3f63f22aabf69f4fe24a1b450ef82ed97 \
     --hash=sha256:f006611bcc83b3c071964a723953e918b699e574eb8614ba564ae3cdef148ee1
@@ -281,11 +281,11 @@ google-genai==1.52.0 \
     --hash=sha256:a74e8a4b3025f23aa98d6a0f84783119012ca6c336fd68f73c5d2b11465d7fc5 \
     --hash=sha256:c8352b9f065ae14b9322b949c7debab8562982f03bf71d44130cd2b798c20743
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   google-cloud-aiplatform
 google-generativeai==0.8.4 \
     --hash=sha256:e987b33ea6decde1e69191ddcaec6ef974458864d243de7191db50c21a7c5b82
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 google-resumable-media==2.7.2 \
     --hash=sha256:3ce7551e9fe6d99e9a126101d2536612bb73486721951e9562fee0f90c6ababa \
     --hash=sha256:5280aed4629f2b60b847b0d42f9857fd4935c11af266744df33d8074cae92fe0
@@ -413,7 +413,7 @@ grpcio==1.71.0 \
     --hash=sha256:f9a412f55bb6e8f3bb000e020dbc1e709627dcb3a56f6431fa7076b4c1aab0db \
     --hash=sha256:f9c30c464cb2ddfbc2ddf9400287701270fdc0f14be5f08a1e3939f1e749b455
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   google-api-core
     #   googleapis-common-protos
     #   grpc-google-iam-v1
@@ -442,7 +442,7 @@ httpx==0.28.1 \
     --hash=sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc \
     --hash=sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   anthropic
     #   google-genai
 idna==3.11 \
@@ -455,7 +455,7 @@ idna==3.11 \
 jinja2==3.1.6 \
     --hash=sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d \
     --hash=sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 jiter==0.10.0 \
     --hash=sha256:023aa0204126fe5b87ccbcd75c8a0d0261b9abdbbf46d55e7ae9f8e22424eeb8 \
     --hash=sha256:03997d2f37f6b67d2f5c475da4412be584e1cec273c1cfc03d642c46db43f8cf \
@@ -772,7 +772,7 @@ psycopg2-binary==2.9.10 \
     --hash=sha256:f758ed67cab30b9a8d2833609513ce4d3bd027641673d4ebc9c067e4d208eec1 \
     --hash=sha256:f8157bed2f51db683f31306aa497311b560f2265998122abe1dce6428bd86567 \
     --hash=sha256:ffe8ed017e4ed70f68b7b371d84b7d4a790368db9203dfc2d222febd3a9c8863
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 pyasn1==0.6.1 \
     --hash=sha256:0d632f46f2ba09143da3a8afe9e33fb6f92fa2320ab7e886e2d0f7672af84629 \
     --hash=sha256:6f580d2bdd84365380830acf45550f2511469f673cb4a5ae3857a3170128b034
@@ -787,7 +787,7 @@ pydantic==2.12.5 \
     --hash=sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49 \
     --hash=sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   anthropic
     #   fastapi
     #   google-cloud-aiplatform
@@ -920,7 +920,7 @@ pydantic-core==2.41.5 \
 pydantic-settings==2.7.1 \
     --hash=sha256:10c9caad35e64bfb3c2fbf70a078c0e25cc92499782e5200747f942a065dec93 \
     --hash=sha256:590be9e6e24d06db33a4262829edef682500ef008565a969c73d39d5f8bfb3fd
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 pyparsing==3.2.1 \
     --hash=sha256:506ff4f4386c4cec0590ec19e6302d3aedb992fdc02c761e90416f158dacf8e1 \
     --hash=sha256:61980854fd66de3a90028d679a954d5f2623e83144b5afe5ee86f43d762e5f0a
@@ -935,12 +935,12 @@ python-dotenv==1.0.1 \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   pydantic-settings
 python-multipart==0.0.18 \
     --hash=sha256:7a68db60c8bfb82e460637fa4750727b45af1d5e2ed215593f917f64694d34fe \
     --hash=sha256:efe91480f485f6a361427a541db4796f9e1591afc0fb8e7a4ba06bfbc6708996
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 pyyaml==6.0.3 \
     --hash=sha256:00c4bdeba853cc34e7dd471f16b4114f4162dc03e6b7afcc2128711f0eca823c \
     --hash=sha256:0150219816b6a1fa26fb4699fb7daa9caf09eb1999f3b70fb6e786805e80375a \
@@ -1015,12 +1015,12 @@ pyyaml==6.0.3 \
     --hash=sha256:f7057c9a337546edc7973c0d3ba84ddcdf0daa14533c2065749c9075001090e6 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 requests==2.32.5 \
     --hash=sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6 \
     --hash=sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   google-api-core
     #   google-cloud-bigquery
     #   google-cloud-storage
@@ -1143,7 +1143,7 @@ sqlalchemy==2.0.40 \
     --hash=sha256:f6bacab7514de6146a1976bc56e1545bee247242fab030b89e5f70336fc0003e \
     --hash=sha256:fe147fcd85aaed53ce90645c91ed5fca0cc88a797314c70dfd9d35925bd5d106
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   alembic
 starlette==0.38.6 \
     --hash=sha256:4517a1409e2e73ee4951214ba012052b9e16f60e90d73cfb06192c19203bbb05 \
@@ -1153,7 +1153,7 @@ tenacity==9.1.2 \
     --hash=sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb \
     --hash=sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138
     # via
-    #   medidocs-referral (pyproject.toml)
+    #   medidocs-opinion (pyproject.toml)
     #   google-genai
 tqdm==4.67.1 \
     --hash=sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2 \
@@ -1180,7 +1180,7 @@ typing-inspection==0.4.2 \
 tzdata==2025.3 \
     --hash=sha256:06a47e5700f3081aab02b2e513160914ff0694bce9947d6b76ebd6bf57cfc5d1 \
     --hash=sha256:de39c2ca5dc7b0344f2eba86f49d614019d29f060fc4ebc8a417896a620b56a7
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 uritemplate==4.1.1 \
     --hash=sha256:4346edfc5c3b79f694bccd6d6099a322bbeb628dbf2cd86eea55a456ce5124f0 \
     --hash=sha256:830c08b8d99bdd312ea4ead05994a38e8936266f84b9a7878232db50b044e02e
@@ -1194,7 +1194,7 @@ urllib3==2.5.0 \
 uvicorn==0.32.0 \
     --hash=sha256:60b8f3a5ac027dcd31448f411ced12b5ef452c646f76f02f8cc3f25d8d26fd82 \
     --hash=sha256:f78b36b143c16f54ccdb8190d0a26b5f1901fe5a3c777e1ab29f26391af8551e
-    # via medidocs-referral (pyproject.toml)
+    # via medidocs-opinion (pyproject.toml)
 websockets==15.0.1 \
     --hash=sha256:0701bc3cfcb9164d04a14b149fd74be7347a530ad3bbf15ab2c678a2cd3dd9a2 \
     --hash=sha256:0a34631031a8f05657e8e90903e656959234f3a04552259458aac0b0f9ae6fd9 \
