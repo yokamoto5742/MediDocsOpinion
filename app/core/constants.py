@@ -6,25 +6,21 @@ class ModelType(str, Enum):
     GEMINI_PRO = "Gemini_Pro"
 
 # プロンプト管理
-DEFAULT_DEPARTMENT = ["default", "眼科"]
+DEFAULT_DEPARTMENT = ["default"]
 DEFAULT_DOCTOR = ["default"]
 DEPARTMENT_DOCTORS_MAPPING = {
     "default": ["default"],
-    "眼科": ["default", "橋本義弘"],
 }
-DOCUMENT_TYPES = ["他院への紹介", "紹介元への逆紹介", "返書", "最終返書"]
+DOCUMENT_TYPES = ["主治医意見書", "訪問看護指示書"]
 
 # 統計情報
 DEFAULT_STATISTICS_PERIOD_DAYS = 7
 
 # 出力結果
-DEFAULT_SECTION_NAMES = [
-    "現在の処方",
-    "備考",
-]
+DEFAULT_SECTION_NAMES = ["治療経過", "特記事項", "備考"]
 
 # app/external/api_factory.py 他
-DEFAULT_DOCUMENT_TYPE = "他院への紹介"
+DEFAULT_DOCUMENT_TYPE = "主治医意見書"
 # app/external/base_api.py
 DEFAULT_SUMMARY_PROMPT = """
 以下のカルテ情報を要約してください。これまでの治療内容を記載してください。
@@ -38,14 +34,6 @@ SECTION_DETECTION_PATTERNS = [
     r'^{section}\s*[:：]?\s*(.*)$',
     r'^{section}\s*$',
 ]
-
-# 診療情報提供者アプリ固有の設定
-DOCUMENT_TYPE_TO_PURPOSE_MAPPING = {
-    "他院への紹介": "精査加療依頼",
-    "紹介元への逆紹介": "継続治療依頼",
-    "返書": "受診報告",
-    "最終返書": "治療経過報告",
-}
 
 MESSAGES: dict[str, dict[str, str]] = {
     "ERROR": {
