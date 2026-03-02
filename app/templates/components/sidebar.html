@@ -1,0 +1,58 @@
+<aside class="w-56 bg-white dark:bg-gray-800 shadow-lg p-4 flex flex-col">
+
+    <div class="space-y-4 mb-6">
+        <div>
+            <label class="block text-sm font-medium text-white mb-1">診療科</label>
+            <select x-model="settings.department" @change="updateDoctors(); updateSelectedModel()"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+                {% for dept in departments %}
+                <option value="{{ dept }}">{{ '全科共通' if dept == 'default' else dept }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-white mb-1">医師名</label>
+            <select x-model="settings.doctor" @change="updateSelectedModel()"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+                <template x-for="doc in doctors" :key="doc">
+                    <option :value="doc" x-text="doc === 'default' ? '医師共通' : doc"></option>
+                </template>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-white mb-1">文書名</label>
+            <select x-model="settings.documentType" @change="updateReferralPurpose(); updateSelectedModel()"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+                {% for type in document_types %}
+                <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-white mb-1">AIモデル</label>
+            <select x-model="settings.model"
+                    class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+                {% for model in available_models %}
+                <option value="{{ model }}">{{ model }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <nav class="flex-1 space-y-2">
+        <a href="/" class="block p-2 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 {{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' if active_page == 'index' else '' }}">
+            文書作成
+        </a>
+        {% if prompt_management %}
+        <a href="/prompts" class="block p-2 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 {{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' if active_page == 'prompts' else '' }}">
+            プロンプト管理
+        </a>
+        {% endif %}
+        <a href="/statistics" class="block p-2 rounded text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 {{ 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' if active_page == 'statistics' else '' }}">
+            統計情報
+        </a>
+    </nav>
+</aside>

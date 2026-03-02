@@ -1,0 +1,9 @@
+{
+  "typeCheckingMode": "standard",
+  "pythonVersion": "3.13",
+  "include": ["app"],
+  "exclude": ["tests", "scripts"],
+  "reportMissingTypeStubs": false,
+  "reportUnusedVariable": true,
+  "reportUnusedImport": true
+}

@@ -1,0 +1,70 @@
+{# テキストエリアコンポーネント #}
+{% macro textarea_field(label, model, rows=1) %}
+<div>
+    <label class="block text-base font-medium text-white mb-1">{{ label }}</label>
+    <textarea x-model="{{ model }}" rows="{{ rows }}" class="form-textarea"></textarea>
+</div>
+{% endmacro %}
+
+{# プライマリボタン #}
+{% macro primary_button(text, disabled_model=None, loading_text=None, type="button", click=None) %}
+<button type="{{ type }}"
+    {% if click %}@click="{{ click }}"{% endif %}
+    {% if disabled_model %}:disabled="{{ disabled_model }}"{% endif %}
+    class="btn-primary">
+    {% if loading_text %}
+    <span x-show="!{{ disabled_model }}">{{ text }}</span>
+    <span x-show="{{ disabled_model }}">{{ loading_text }}</span>
+    {% else %}
+    {{ text }}
+    {% endif %}
+</button>
+{% endmacro %}
+
+{# セカンダリボタン #}
+{% macro secondary_button(text, click) %}
+<button type="button" @click="{{ click }}" class="btn-secondary">
+    {{ text }}
+</button>
+{% endmacro %}
+
+{# 成功ボタン（評価ボタン用） #}
+{% macro success_button(text, disabled_model=None, loading_text=None, click=None) %}
+<button type="button"
+    {% if click %}@click="{{ click }}"{% endif %}
+    {% if disabled_model %}:disabled="{{ disabled_model }}"{% endif %}
+    class="btn-success">
+    {% if loading_text %}
+    <span x-show="!{{ disabled_model }}">{{ text }}</span>
+    <span x-show="{{ disabled_model }}">{{ loading_text }}</span>
+    {% else %}
+    {{ text }}
+    {% endif %}
+</button>
+{% endmacro %}
+
+{# アクセントボタン（評価確認ボタン用） #}
+{% macro accent_button(text, click, show_condition=None) %}
+<button type="button"
+    @click="{{ click }}"
+    {% if show_condition %}x-show="{{ show_condition }}"{% endif %}
+    class="btn-accent">
+    {{ text }}
+</button>
+{% endmacro %}
+
+{# エラー表示 #}
+{% macro error_alert() %}
+<template x-if="error">
+<div class="alert-error">
+    <span x-text="error"></span>
+</div>
+</template>
+{% endmacro %}
+
+{# 警告表示 #}
+{% macro warning_alert(show_condition, message_model) %}
+<div x-show="{{ show_condition }}" class="alert-warning">
+    <span x-text="{{ message_model }}"></span>
+</div>
+{% endmacro %}

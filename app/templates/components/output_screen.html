@@ -1,0 +1,70 @@
+{% import "macros.html" as m %}
+
+<!-- 出力画面 -->
+<template x-if="currentScreen === 'output'">
+<div>
+    <!-- ボタン -->
+    <div class="mb-6 flex gap-4">
+        {{ m.primary_button("コピー", click="copyCurrentTab()") }}
+        {{ m.success_button("出力評価", "isEvaluating", "評価中...", "evaluateOutput()") }}
+        {{ m.accent_button("評価確認", "showEvaluation()", "evaluationResult.result") }}
+        {{ m.secondary_button("クリアして戻る", "backToInput()") }}
+    </div>
+
+    <!-- 評価中の時間表示 -->
+    <template x-if="isEvaluating">
+    <div class="mb-4 text-base text-white">
+        評価時間: <span x-text="evaluationElapsedTime"></span>秒
+    </div>
+    </template>
+
+    <!-- エラー表示（出力画面） -->
+    <div class="mb-4">
+        {{ m.error_alert() }}
+    </div>
+
+    <!-- モデル切替警告 -->
+    <div x-show="result.modelSwitched" class="mb-4 alert-warning">
+        入力が長いためモデルを <span x-text="result.modelUsed"></span> に切り替えました
+    </div>
+
+    <!-- タブ -->
+    <div class="border-b border-gray-200 dark:border-gray-700">
+        <nav class="flex -mb-px">
+            <template x-for="(tab, index) in tabs" :key="tab">
+                <button @click="activeTab = index"
+                    :class="getTabClass(index)"
+                    class="px-4 py-2 border-b-2 font-medium text-sm"
+                    x-text="tab">
+                </button>
+            </template>
+        </nav>
+    </div>
+
+    <!-- タブコンテンツ -->
+    <div class="mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md ">
+        <textarea x-show="activeTab === 0"
+            x-model="result.outputSummary"
+            rows="8"
+            class="w-full border-0 bg-transparent font-mono text-base text-gray-900 dark:text-gray-100 focus:ring-0 resize-none"
+            style="min-height: 300px;">
+        </textarea>
+        <template x-for="(tab, index) in tabs.slice(1)" :key="tab">
+            <textarea x-show="activeTab === index + 1"
+                x-model="result.parsedSummary[tab]"
+                rows="8"
+                class="w-full border-0 bg-transparent font-mono text-base text-gray-900 dark:text-gray-100 focus:ring-0 resize-none"
+                style="min-height: 300px;">
+            </textarea>
+        </template>
+    </div>
+
+    <p x-show="result.processingTime" class="mt-2 text-base text-white">
+        作成時間: <span x-text="result.processingTime.toFixed(0)"></span>秒
+    </p>
+
+    <p class="mt-6 text-sm text-white">
+        {{ messages.INFO.AI_DISCLAIMER_OUTPUT }}
+    </p>
+</div>
+</template>

@@ -1,0 +1,36 @@
+{% import "macros.html" as m %}
+
+<!-- 評価結果画面 -->
+<template x-if="currentScreen === 'evaluation'">
+<div>
+    <!-- ボタン -->
+    <div class="mb-6 flex gap-4">
+        {{ m.primary_button("コピー", click="copyToClipboard(evaluationResult.result)") }}
+        {{ m.secondary_button("出力結果に戻る", "backToOutput()") }}
+    </div>
+
+    <!-- 評価結果表示 -->
+    <div class="border-b border-gray-200 dark:border-gray-700 mb-4">
+        <h3 class="px-4 py-2 font-medium text-sm text-blue-600 dark:text-blue-400 border-b-2 border-blue-500">
+            評価結果
+        </h3>
+    </div>
+
+    <div class="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md">
+        <textarea
+            x-model="evaluationResult.result"
+            rows="8"
+            class="w-full border-0 bg-transparent font-mono text-base text-gray-900 dark:text-gray-100 focus:ring-0 resize-none"
+            style="min-height: 300px;">
+        </textarea>
+    </div>
+
+    <p x-show="evaluationResult.processingTime" class="mt-2 text-base text-white">
+        評価時間: <span x-text="evaluationResult.processingTime.toFixed(0)"></span>秒
+    </p>
+
+    <p class="mt-6 text-sm text-white">
+        {{ messages.INFO.AI_DISCLAIMER_EVALUATION }}
+    </p>
+</div>
+</template>

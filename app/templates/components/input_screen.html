@@ -1,0 +1,31 @@
+{% import "macros.html" as m %}
+
+<!-- 入力画面 -->
+<template x-if="currentScreen === 'input'">
+<div>
+    <form @submit.prevent="generateSummary()" class="space-y-2">
+        {{ m.textarea_field("紹介目的", "form.referralPurpose", 1) }}
+        {{ m.textarea_field("現在の処方", "form.currentPrescription", 1) }}
+        {{ m.textarea_field("カルテ記載", "form.medicalText", 3) }}
+        {{ m.textarea_field("追加情報", "form.additionalInfo", 1) }}
+        <p class="text-sm text-white">{{ messages.VALIDATION.NO_PERSONAL_INFO }}</p>
+
+        <div class="flex gap-4">
+            {{ m.primary_button("作成", "isGenerating", "生成中...", type="submit") }}
+            {{ m.secondary_button("テキストをクリア", "clearForm()") }}
+        </div>
+
+        <!-- 作成時間の経過表示 -->
+        <template x-if="isGenerating">
+        <div class="mt-2 text-base text-white">
+            作成時間: <span x-text="elapsedTime"></span>秒
+        </div>
+        </template>
+    </form>
+
+    <!-- エラー表示（入力画面） -->
+    <div class="mt-4">
+        {{ m.error_alert() }}
+    </div>
+</div>
+</template>

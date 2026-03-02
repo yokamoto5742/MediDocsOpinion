@@ -1,0 +1,136 @@
+{
+  "family": "medidocs-referral",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::149050210156:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::149050210156:role/medidocsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "medidocs-referral",
+      "image": "149050210156.dkr.ecr.ap-northeast-1.amazonaws.com/medidocs-referral:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "AWS_DEFAULT_REGION",
+          "value": "ap-northeast-1"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "POSTGRES_HOST",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_HOST::"
+        },
+        {
+          "name": "POSTGRES_PORT",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_PORT::"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_USER::"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_PASSWORD::"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_DB::"
+        },
+        {
+          "name": "POSTGRES_SSL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_SSL::"
+        },
+        {
+          "name": "ANTHROPIC_MODEL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:ANTHROPIC_MODEL::"
+        },
+        {
+          "name": "CSRF_SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CSRF_SECRET_KEY::"
+        },
+        {
+          "name": "GEMINI_MODEL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GEMINI_MODEL::"
+        },
+        {
+          "name": "GOOGLE_CREDENTIALS_JSON",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GOOGLE_CREDENTIALS_JSON::"
+        },
+        {
+          "name": "GOOGLE_PROJECT_ID",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GOOGLE_PROJECT_ID::"
+        },
+        {
+          "name": "GOOGLE_LOCATION",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GOOGLE_LOCATION::"
+        },
+        {
+          "name": "PROMPT_MANAGEMENT",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:PROMPT_MANAGEMENT::"
+        },
+        {
+          "name": "MAX_INPUT_TOKENS",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:MAX_INPUT_TOKENS::"
+        },
+        {
+          "name": "MIN_INPUT_TOKENS",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:MIN_INPUT_TOKENS::"
+        },
+        {
+          "name": "MAX_TOKEN_THRESHOLD",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:MAX_TOKEN_THRESHOLD::"
+        },
+        {
+          "name": "CLOUDFLARE_ACCOUNT_ID",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_ACCOUNT_ID::"
+        },
+        {
+          "name": "CLOUDFLARE_GATEWAY_ID",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_GATEWAY_ID::"
+        },
+        {
+          "name": "CLOUDFLARE_AIG_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_AIG_TOKEN::"
+        },
+        {
+          "name": "AWS_REGION",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:AWS_REGION::"
+        },
+        {
+          "name": "GEMINI_EVALUATION_MODEL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GEMINI_EVALUATION_MODEL::"
+        },
+        {
+          "name": "GEMINI_THINKING_LEVEL",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GEMINI_THINKING_LEVEL::"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/medidocs-referral",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

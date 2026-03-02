@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}統計情報 - 診療情報提供書{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl" x-data="statisticsPage()">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">統計情報</h2>
+
+    <!-- フィルター -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-white mb-1">開始日</label>
+                <input type="date" x-model="filter.startDate" @change="loadData()"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white mb-1">AIモデル</label>
+                <select x-model="filter.model" @change="loadData()"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">すべて</option>
+                    {% for model in available_models %}
+                    <option value="{{ model }}">{{ model }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+                <label class="block text-sm font-medium text-white mb-1">終了日</label>
+                <input type="date" x-model="filter.endDate" @change="loadData()"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-white mb-1">文書名</label>
+                <select x-model="filter.documentType" @change="loadData()"
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="">すべて</option>
+                    {% for doc_type in document_types %}
+                    <option value="{{ doc_type }}">{{ doc_type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- エラー表示 -->
+    <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4" x-text="error"></div>
+
+    <!-- 集計テーブル -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow mb-6">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">集計統計</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                        <th @click="sortAggregated('document_type')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            文書名 <span x-text="getSortIcon(aggregatedSort, 'document_type')"></span>
+                        </th>
+                        <th @click="sortAggregated('department')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            診療科 <span x-text="getSortIcon(aggregatedSort, 'department')"></span>
+                        </th>
+                        <th @click="sortAggregated('doctor')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            医師名 <span x-text="getSortIcon(aggregatedSort, 'doctor')"></span>
+                        </th>
+                        <th @click="sortAggregated('count')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            作成件数 <span x-text="getSortIcon(aggregatedSort, 'count')"></span>
+                        </th>
+                        <th @click="sortAggregated('input_tokens')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            入力トークン <span x-text="getSortIcon(aggregatedSort, 'input_tokens')"></span>
+                        </th>
+                        <th @click="sortAggregated('output_tokens')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            出力トークン <span x-text="getSortIcon(aggregatedSort, 'output_tokens')"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <template x-if="isLoadingAggregated">
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-white">読み込み中...</td>
+                        </tr>
+                    </template>
+                    <template x-if="!isLoadingAggregated && aggregatedRecords.length === 0">
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-white">データがありません</td>
+                        </tr>
+                    </template>
+                    <template x-for="record in aggregatedRecords" :key="record.document_type + record.department + record.doctor">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.document_type"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.department"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.doctor"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="record.count"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="formatNumber(record.input_tokens)"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="formatNumber(record.output_tokens)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 使用履歴テーブル -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">使用履歴</h3>
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-white">表示件数:</label>
+                <select x-model="pagination.limit" @change="loadRecords()"
+                        class="border border-gray-300 dark:border-gray-600 rounded-md p-1 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                        <th @click="sortRecords('date')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            作成日 <span x-text="getSortIcon(recordsSort, 'date')"></span>
+                        </th>
+                        <th @click="sortRecords('document_type')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            文書名 <span x-text="getSortIcon(recordsSort, 'document_type')"></span>
+                        </th>
+                        <th @click="sortRecords('department')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            診療科 <span x-text="getSortIcon(recordsSort, 'department')"></span>
+                        </th>
+                        <th @click="sortRecords('doctor')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            医師名 <span x-text="getSortIcon(recordsSort, 'doctor')"></span>
+                        </th>
+                        <th @click="sortRecords('model')" class="px-4 py-3 text-left text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            AIモデル <span x-text="getSortIcon(recordsSort, 'model')"></span>
+                        </th>
+                        <th @click="sortRecords('input_tokens')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            入力トークン <span x-text="getSortIcon(recordsSort, 'input_tokens')"></span>
+                        </th>
+                        <th @click="sortRecords('output_tokens')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            出力トークン <span x-text="getSortIcon(recordsSort, 'output_tokens')"></span>
+                        </th>
+                        <th @click="sortRecords('processing_time')" class="px-4 py-3 text-right text-xs font-medium text-white uppercase cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
+                            作成時間(秒) <span x-text="getSortIcon(recordsSort, 'processing_time')"></span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <template x-if="isLoadingRecords">
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-white">読み込み中...</td>
+                        </tr>
+                    </template>
+                    <template x-if="!isLoadingRecords && records.length === 0">
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-white">データがありません</td>
+                        </tr>
+                    </template>
+                    <template x-for="record in records" :key="record.id">
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="formatDateTime(record.date)"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.document_type || '-'"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.department === 'default' ? '全科共通' : (record.department || '全科共通')"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="record.doctor === 'default' ? '医師共通' : (record.doctor || '医師共通')"></td>
+                            <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100" x-text="formatModelName(record.model)"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="formatNumber(record.input_tokens || 0)"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="formatNumber(record.output_tokens || 0)"></td>
+                            <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100" x-text="(record.processing_time || 0).toFixed(0)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <button @click="previousPage()" :disabled="pagination.offset === 0"
+                    class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500 disabled:opacity-50">
+                前へ
+            </button>
+            <span class="text-sm text-white">
+                <span x-text="pagination.offset + 1"></span> - <span x-text="Math.min(pagination.offset + pagination.limit, totalRecords)"></span>
+                / <span x-text="totalRecords"></span> 件
+            </span>
+            <button @click="nextPage()" :disabled="pagination.offset + pagination.limit >= totalRecords"
+                    class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500 disabled:opacity-50">
+                次へ
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function statisticsPage() {
+    return {
+        aggregatedRecords: [],
+        records: [],
+        filter: {
+            startDate: '',
+            endDate: '',
+            model: '',
+            documentType: ''
+        },
+        pagination: {
+            limit: 25,
+            offset: 0
+        },
+        totalRecords: 0,
+        isLoadingAggregated: false,
+        isLoadingRecords: false,
+        error: null,
+        aggregatedSort: {
+            column: '',
+            direction: 'asc'
+        },
+        recordsSort: {
+            column: '',
+            direction: 'asc'
+        },
+
+        async init() {
+            // デフォルトの日付範囲を設定（終了日: 本日、開始日: 7日前）
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+
+            this.filter.endDate = today.toISOString().split('T')[0];
+            this.filter.startDate = sevenDaysAgo.toISOString().split('T')[0];
+
+            await this.loadData();
+        },
+
+        async loadData() {
+            await Promise.all([
+                this.loadAggregatedData(),
+                this.loadRecords()
+            ]);
+        },
+
+        async loadAggregatedData() {
+            this.isLoadingAggregated = true;
+            this.error = null;
+
+            try {
+                const params = new URLSearchParams();
+                if (this.filter.startDate) {
+                    // Asia/Tokyo タイムゾーンで開始日の 00:00:00 を設定
+                    params.append('start_date', this.filter.startDate + 'T00:00:00+09:00');
+                }
+                if (this.filter.endDate) {
+                    // Asia/Tokyo タイムゾーンで終了日の 23:59:59 を設定
+                    const endDateTime = new Date(this.filter.endDate + 'T23:59:59+09:00');
+                    params.append('end_date', endDateTime.toISOString());
+                }
+                if (this.filter.model) params.append('model', this.filter.model);
+                if (this.filter.documentType) params.append('document_type', this.filter.documentType);
+
+                const response = await fetch(`/api/statistics/aggregated?${params}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                this.aggregatedRecords = await response.json();
+            } catch (e) {
+                this.error = window.MESSAGES.ERROR.STATISTICS_AGGREGATED_LOAD_FAILED;
+            } finally {
+                this.isLoadingAggregated = false;
+            }
+        },
+
+        async loadRecords() {
+            this.isLoadingRecords = true;
+            this.error = null;
+
+            try {
+                const params = new URLSearchParams({
+                    limit: this.pagination.limit,
+                    offset: this.pagination.offset
+                });
+
+                if (this.filter.startDate) {
+                    // Asia/Tokyo タイムゾーンで開始日の 00:00:00 を設定
+                    params.append('start_date', this.filter.startDate + 'T00:00:00+09:00');
+                }
+                if (this.filter.endDate) {
+                    // Asia/Tokyo タイムゾーンで終了日の 23:59:59 を設定
+                    const endDateTime = new Date(this.filter.endDate + 'T23:59:59+09:00');
+                    params.append('end_date', endDateTime.toISOString());
+                }
+                if (this.filter.model) params.append('model', this.filter.model);
+                if (this.filter.documentType) params.append('document_type', this.filter.documentType);
+
+                const response = await fetch(`/api/statistics/records?${params}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                this.records = await response.json();
+                this.totalRecords = this.records.length > 0 ? this.pagination.offset + this.records.length + (this.records.length === parseInt(this.pagination.limit) ? 1 : 0) : 0;
+            } catch (e) {
+                this.error = window.MESSAGES.ERROR.STATISTICS_RECORDS_LOAD_FAILED;
+            } finally {
+                this.isLoadingRecords = false;
+            }
+        },
+
+        async nextPage() {
+            this.pagination.offset += parseInt(this.pagination.limit);
+            await this.loadRecords();
+        },
+
+        async previousPage() {
+            this.pagination.offset = Math.max(0, this.pagination.offset - parseInt(this.pagination.limit));
+            await this.loadRecords();
+        },
+
+        formatNumber(num) {
+            return new Intl.NumberFormat('ja-JP').format(num);
+        },
+
+        formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleString('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        formatModelName(model) {
+            return model || '-';
+        },
+
+        sortAggregated(column) {
+            if (this.aggregatedSort.column === column) {
+                this.aggregatedSort.direction = this.aggregatedSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.aggregatedSort.column = column;
+                this.aggregatedSort.direction = 'asc';
+            }
+
+            this.aggregatedRecords.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+
+                if (aVal < bVal) return this.aggregatedSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return this.aggregatedSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        },
+
+        sortRecords(column) {
+            if (this.recordsSort.column === column) {
+                this.recordsSort.direction = this.recordsSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.recordsSort.column = column;
+                this.recordsSort.direction = 'asc';
+            }
+
+            this.records.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                if (column === 'date') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                } else if (typeof aVal === 'string') {
+                    aVal = aVal?.toLowerCase() || '';
+                    bVal = bVal?.toLowerCase() || '';
+                }
+
+                if (aVal < bVal) return this.recordsSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return this.recordsSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        },
+
+        getSortIcon(sortState, column) {
+            if (sortState.column !== column) return '⇅';
+            return sortState.direction === 'asc' ? '↑' : '↓';
+        }
+    };
+}
+</script>
+{% endblock %}

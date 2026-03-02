@@ -1,0 +1,65 @@
+{
+  "medidocsTaskRole": {
+    "説昁E: "ECSタスクロール - BedrockのInvoke権限�Eみ付丁E,
+    "AssumeRolePolicyDocument": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    },
+    "InlinePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "bedrock:InvokeModel",
+            "bedrock:InvokeModelWithResponseStream"
+          ],
+          "Resource": [
+				"arn:aws:bedrock:ap-northeast-1::foundation-model/*",
+				"arn:aws:bedrock:ap-northeast-1:149050210156:inference-profile/*",
+				"arn:aws:bedrock:ap-northeast-3::foundation-model/*",
+				"arn:aws:bedrock:ap-northeast-3:149050210156:inference-profile/*"
+          ]
+        }
+      ]
+    }
+  },
+  "ecsTaskExecutionRole": {
+    "説昁E: "ECSタスク実行ロール - ECRプル、Secrets Manager読取、CloudWatch Logs書き込み",
+    "AssumeRolePolicyDocument": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Principal": {
+            "Service": "ecs-tasks.amazonaws.com"
+          },
+          "Action": "sts:AssumeRole"
+        }
+      ]
+    },
+    "ManagedPolicies": [
+      "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+    ],
+    "InlinePolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "secretsmanager:GetSecretValue"
+          ],
+          "Resource": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/*"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest --version)",
+      "Bash(windows-notify:*)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(python3 -m pytest tests/ -v --tb=short)",
+      "Bash(py -m pytest tests/ -v --tb=short)",
+      "Bash(py -c \"import pytest; print(pytest.__version__)\")",
+      "Bash(.venvScriptspytest.exe tests/ -v --tb=short)",
+      "Bash(\"C:/Users/yokam/PycharmProjects/MediDocsLMsummary/.venv/Scripts/pytest.exe\" tests/ -v --tb=short)",
+      "Bash(python -m pytest tests/services/test_summary_service.py::TestSummaryService::test_execute_summary_generation_with_ui tests/utils/test_text_processor.py::TestTextProcessor::test_parse_output_summary_inline_content -v)",
+      "Bash(claude config --help)",
+      "Bash(claude config list)",
+      "Bash(powershell:*)",
+      "Bash(claude config get hooks)",
+      "Bash(dir:*)",
+      "Bash(move teststest_config_manager.py testsutils )",
+      "Bash(move teststest_helpers.py testsutils )",
+      "Bash(move teststest_file_searcher.py testsservice )",
+      "Bash(move teststest_search_indexer.py testsservice )",
+      "Bash(move teststest_indexed_file_searcher.py testsservice )",
+      "Bash(move teststest_file_opener.py testsservice )",
+      "Bash(move teststest_handlers.py testsservice)",
+      "Bash(python -m pytest tests/ -v --tb=short --disable-warnings)",
+      "mcp__plugin_serena_serena__get_current_config",
+      "mcp__plugin_serena_serena__check_onboarding_performed",
+      "mcp__plugin_serena_serena__list_dir",
+      "mcp__plugin_serena_serena__find_symbol",
+      "mcp__plugin_serena_serena__read_file",
+      "mcp__plugin_serena_serena__list_memories",
+      "mcp__plugin_serena_serena__search_for_pattern"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Read(.env.*)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(docs/LICENSE*)",
+      "Read(**/*token*)",
+      "Read(**/*key*)",
+      "Write(.env*)",
+      "Write(docs/LICENSE*)",
+      "Write(**/secrets/**)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(nc:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm remove:*)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)",
+      "Bash(mongod:*)",
+      "mcp__supabase__execute_sql"
+    ],
+    "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('Claude Codeがユーザーに質問しています', 'Claude Code - 質問', 'OK', 'Information')\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('タスクが完了しました', 'Claude Code', 'OK', 'Information')\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('セッションが終了しました', 'Claude Code', 'OK', 'Information')\""
+          }
+        ]
+      }
+    ]
+  }
+}

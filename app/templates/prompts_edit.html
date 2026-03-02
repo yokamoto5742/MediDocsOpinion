@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}プロンプト編集{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="promptEditPage({{ prompt_id }})">
+    <!-- パンくずリスト -->
+    <nav class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <a href="/prompts" class="hover:text-blue-600 dark:hover:text-blue-400">プロンプト管理</a>
+        <span class="mx-2">&gt;</span>
+        <span class="text-gray-700 dark:text-gray-300">編集</span>
+    </nav>
+
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">プロンプト編集</h2>
+
+    <!-- 読み込み中表示 -->
+    <template x-if="isLoading">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center text-gray-500 dark:text-gray-400">
+            読み込み中...
+        </div>
+    </template>
+
+    <!-- エラー表示 -->
+    <div x-show="error" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded mb-4" x-text="error"></div>
+
+    <!-- フォーム -->
+    <template x-if="!isLoading && !loadError">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">診療科</label>
+                    <input type="text" :value="form.department === 'default' ? '全科共通' : form.department" disabled
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">医師名</label>
+                    <input type="text" :value="form.doctor === 'default' ? '医師共通' : form.doctor" disabled
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">文書タイプ</label>
+                    <input type="text" :value="form.documentType" disabled
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-gray-100 dark:bg-gray-600 text-gray-900 dark:text-gray-100 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">選択モデル</label>
+                    <select x-model="form.selectedModel" class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="">デフォルト</option>
+                        {% for model in available_models %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">プロンプト内容 *</label>
+                <textarea x-model="form.content" rows="5"
+                          class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          style="min-height: 100px;"
+                          placeholder="プロンプトの内容を入力してください"></textarea>
+            </div>
+            <div class="flex gap-2">
+                <button @click="updatePrompt()" :disabled="isSaving"
+                        class="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50">
+                    <span x-show="!isSaving">更新</span>
+                    <span x-show="isSaving">保存中...</span>
+                </button>
+                <button @click="deletePrompt()" :disabled="isSaving"
+                        class="bg-red-600 dark:bg-red-500 text-white px-6 py-2 rounded hover:bg-red-700 dark:hover:bg-red-600 disabled:opacity-50">
+                    削除
+                </button>
+                <a href="/prompts"
+                   class="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded hover:bg-gray-400 dark:hover:bg-gray-500 inline-block text-center">
+                    キャンセル
+                </a>
+            </div>
+        </div>
+    </template>
+
+    <!-- 読み込みエラー表示 -->
+    <template x-if="loadError">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 text-center">
+            <p class="text-red-600 dark:text-red-400 mb-4" x-text="loadError"></p>
+            <a href="/prompts" class="text-blue-600 dark:text-blue-400 hover:underline">プロンプト一覧に戻る</a>
+        </div>
+    </template>
+</div>
+
+<script>
+function promptEditPage(promptId) {
+    return {
+        promptId: promptId,
+        form: {
+            department: '',
+            doctor: '',
+            documentType: '',
+            selectedModel: '',
+            content: ''
+        },
+        isLoading: true,
+        isSaving: false,
+        error: null,
+        loadError: null,
+
+        async init() {
+            await this.loadPrompt();
+        },
+
+        async loadPrompt() {
+            this.isLoading = true;
+            this.loadError = null;
+
+            try {
+                const response = await fetch(`/api/prompts/${this.promptId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.form = {
+                        department: data.department,
+                        doctor: data.doctor,
+                        documentType: data.document_type,
+                        selectedModel: data.selected_model || '',
+                        content: data.content
+                    };
+                } else if (response.status === 404) {
+                    this.loadError = window.MESSAGES.ERROR.PROMPT_NOT_FOUND;
+                } else {
+                    this.loadError = window.MESSAGES.ERROR.PROMPT_LOAD_FAILED;
+                }
+            } catch (e) {
+                this.loadError = window.MESSAGES.ERROR.API_ERROR;
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async updatePrompt() {
+            if (!this.form.content.trim()) {
+                this.error = window.MESSAGES.VALIDATION.PROMPT_CONTENT_REQUIRED;
+                return;
+            }
+
+            this.isSaving = true;
+            this.error = null;
+
+            try {
+                const response = await fetch('/api/prompts/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': window.CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        department: this.form.department,
+                        doctor: this.form.doctor,
+                        document_type: this.form.documentType,
+                        selected_model: this.form.selectedModel || null,
+                        content: this.form.content
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/prompts?updated=1';
+                } else {
+                    const data = await response.json();
+                    this.error = data.detail || window.MESSAGES.ERROR.PROMPT_UPDATE_FAILED;
+                }
+            } catch (e) {
+                this.error = window.MESSAGES.ERROR.API_ERROR;
+            } finally {
+                this.isSaving = false;
+            }
+        },
+
+        async deletePrompt() {
+            if (!confirm(window.MESSAGES.CONFIRM.DELETE_PROMPT)) return;
+
+            this.isSaving = true;
+            this.error = null;
+
+            try {
+                const response = await fetch(`/api/prompts/${this.promptId}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-Token': window.CSRF_TOKEN }
+                });
+
+                if (response.ok) {
+                    window.location.href = '/prompts?deleted=1';
+                } else {
+                    const data = await response.json();
+                    this.error = data.detail || window.MESSAGES.ERROR.PROMPT_DELETE_FAILED;
+                }
+            } catch (e) {
+                this.error = window.MESSAGES.ERROR.API_ERROR;
+            } finally {
+                this.isSaving = false;
+            }
+        }
+    };
+}
+</script>
+{% endblock %}
