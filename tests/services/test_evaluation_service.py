@@ -32,7 +32,7 @@ class TestBuildEvaluationPrompt:
         assert "【カルテ記載】" in result
         assert input_text in result
         assert "【前回の記載】" in result
-        assert current_prescription in result
+        assert previous_text in result
         assert "【追加情報】" in result
         assert additional_info in result
         assert "【生成された出力】" in result
@@ -277,7 +277,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text=long_input_text,
-            current_prescription="複数の処方薬",
+            previous_text="複数の処方薬",
             additional_info="詳細な追加情報",
             output_summary="詳細な出力内容"
         )
@@ -291,7 +291,7 @@ class TestExecuteEvaluation:
         call_args = mock_client._generate_content.call_args[0][0]
         assert "詳細な評価プロンプト" in call_args
         assert "【カルテ記載】" in call_args
-        assert "【現在の処方】" in call_args
+        assert "【前回の記載】" in call_args
         assert "【追加情報】" in call_args
         assert "【生成された出力】" in call_args
 

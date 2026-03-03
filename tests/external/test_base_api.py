@@ -292,7 +292,7 @@ class TestGenerateSummary:
 
         client = MockAPIClient()
         result = client.generate_summary(medical_text="患者情報", additional_info="追加情報",
-                                         current_prescription="処方",
+                                         previous_text="処方",
                                          document_type="他院への紹介")
 
         assert result == ("生成されたテキスト", 1000, 500)
