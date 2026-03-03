@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # ==============================================================
-# MediDocsReferral AWS デプロイスクリプト
+# MediDocsOpinion AWS デプロイスクリプト
 # 使い方: ./scripts/deploy.sh [--account-id ACCOUNT_ID] [--tag TAG]
 # ==============================================================
 
 REGION="ap-northeast-1"
-ECR_REPO="medidocs-referral"
+ECR_REPO="medidocs-opinion"
 CLUSTER="medidocs-cluster"
-SERVICE="medidocs-referral-service"
+SERVICE="medidocs-opinion-service"
 TAG="${TAG:-latest}"
 ACCOUNT_ID="${ACCOUNT_ID:-}"
 

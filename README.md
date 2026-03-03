@@ -51,7 +51,7 @@
 ### 1. リポジトリのクローン
 ```bash
 git clone <repository-url>
-cd MediDocsReferral
+cd MediDocsOpinion
 ```
 
 ### 2\. 仮想環境の作成と有効化

@@ -1,5 +1,5 @@
 {
-  "family": "medidocs-referral",
+  "family": "medidocs-opinion",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
@@ -8,8 +8,8 @@
   "taskRoleArn": "arn:aws:iam::149050210156:role/medidocsTaskRole",
   "containerDefinitions": [
     {
-      "name": "medidocs-referral",
-      "image": "149050210156.dkr.ecr.ap-northeast-1.amazonaws.com/medidocs-referral:latest",
+      "name": "medidocs-opinion",
+      "image": "149050210156.dkr.ecr.ap-northeast-1.amazonaws.com/medidocs-opinion:latest",
       "essential": true,
       "portMappings": [
         {
@@ -126,7 +126,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/medidocs-referral",
+          "awslogs-group": "/ecs/medidocs-opinion",
           "awslogs-region": "ap-northeast-1",
           "awslogs-stream-prefix": "ecs"
         }

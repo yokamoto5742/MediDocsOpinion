@@ -229,7 +229,7 @@ class TestSaveUsage:
         assert added_usage.model == "Claude"
         assert added_usage.input_tokens == 1000
         assert added_usage.output_tokens == 500
-        assert added_usage.app_type == "referral_letter"
+        assert added_usage.app_type == "opinion_letter"
         assert added_usage.processing_time == 2.5
 
     @patch("app.services.usage_service.get_db_session")

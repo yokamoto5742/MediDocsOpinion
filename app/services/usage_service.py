@@ -29,7 +29,7 @@ def save_usage(
                 model=model,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
-                app_type="referral_letter",
+                app_type="opinion_letter",
                 processing_time=processing_time,
             )
             db.add(usage)
