@@ -96,7 +96,7 @@ class TestGenerateSummaryWithProvider:
         call_args = mock_generate.call_args[0]
         assert call_args[0] == "患者情報"
         assert call_args[1] == ""  # additional_info
-        assert call_args[2] == ""  # current_prescription
+        assert call_args[2] == ""  # previous_text
 
     @patch.object(GeminiAPIClient, "generate_summary")
     def test_generate_summary_gemini_all_params(self, mock_generate):
@@ -107,7 +107,7 @@ class TestGenerateSummaryWithProvider:
             provider="gemini",
             medical_text="カルテ情報",
             additional_info="追加情報",
-            current_prescription="処方内容",
+            previous_text="処方内容",
             department="眼科",
             document_type="他院への紹介",
             doctor="橋本義弘",
@@ -117,11 +117,11 @@ class TestGenerateSummaryWithProvider:
         assert result == ("生成された文書", 2000, 800)
         mock_generate.assert_called_once()
 
-        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[0] == "カルテ情報"
         assert call_args[1] == "追加情報"
-        assert call_args[2] == "処方内容"
+        assert call_args[2] == "処方内容"  # previous_text
         assert call_args[3] == "眼科"
         assert call_args[4] == "他院への紹介"
         assert call_args[5] == "橋本義弘"
@@ -172,7 +172,7 @@ class TestGenerateSummaryWithProvider:
             medical_text="データ",
         )
 
-        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         # DEFAULT_DOCUMENT_TYPE が使用される（constants.py: "他院への紹介"）
         assert call_args[4] == "他院への紹介"
@@ -208,7 +208,7 @@ class TestEdgeCases:
 
         assert result == ("文書", 1000, 500)
 
-        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[1] == ""   # additional_info
         assert call_args[2] == ""   # current_prescription
@@ -222,6 +222,6 @@ class TestEdgeCases:
 
         assert result == ("文書", 1000, 500)
 
-        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[6] is None  # model_name

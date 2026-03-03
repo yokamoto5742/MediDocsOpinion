@@ -16,14 +16,14 @@ class TestBuildEvaluationPrompt:
         """評価プロンプト構築 - 正常系"""
         prompt_template = "以下の出力を評価してください。"
         input_text = "患者は60歳男性。"
-        current_prescription = "メトホルミン500mg"
+        previous_text = "メトホルミン500mg"
         additional_info = "HbA1c 7.5%"
         output_summary = "主病名: 糖尿病"
 
         result = build_evaluation_prompt(
             prompt_template,
             input_text,
-            current_prescription,
+            previous_text,
             additional_info,
             output_summary
         )
@@ -31,7 +31,7 @@ class TestBuildEvaluationPrompt:
         assert prompt_template in result
         assert "【カルテ記載】" in result
         assert input_text in result
-        assert "【現在の処方】" in result
+        assert "【前回の記載】" in result
         assert current_prescription in result
         assert "【追加情報】" in result
         assert additional_info in result
@@ -85,7 +85,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="処方内容",
+            previous_text="処方内容",
             additional_info="追加情報",
             output_summary="出力内容"
         )
@@ -106,7 +106,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary=""
         )
@@ -125,7 +125,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         )
@@ -152,7 +152,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         )
@@ -192,7 +192,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         )
@@ -229,7 +229,7 @@ class TestExecuteEvaluation:
         result = execute_evaluation(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         )
@@ -326,7 +326,7 @@ class TestExecuteEvaluationStream:
         async for event in execute_evaluation_stream(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="処方内容",
+            previous_text="処方内容",
             additional_info="追加情報",
             output_summary="出力内容"
         ):
@@ -348,7 +348,7 @@ class TestExecuteEvaluationStream:
         async for event in execute_evaluation_stream(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary=""
         ):
@@ -369,7 +369,7 @@ class TestExecuteEvaluationStream:
         async for event in execute_evaluation_stream(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         ):
@@ -398,7 +398,7 @@ class TestExecuteEvaluationStream:
         async for event in execute_evaluation_stream(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         ):
@@ -436,7 +436,7 @@ class TestExecuteEvaluationStream:
         async for event in execute_evaluation_stream(
             document_type="他院への紹介",
             input_text="患者情報",
-            current_prescription="",
+            previous_text="",
             additional_info="",
             output_summary="出力内容"
         ):

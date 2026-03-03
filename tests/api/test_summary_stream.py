@@ -31,8 +31,7 @@ def test_generate_summary_stream_success(client, mock_csrf_token):
                 json={
                     "medical_text": "患者は60歳男性",
                     "additional_info": "",
-                    "referral_purpose": "",
-                    "current_prescription": "",
+                    "previous_text": "",
                     "department": "default",
                     "doctor": "default",
                     "document_type": "他院への紹介",

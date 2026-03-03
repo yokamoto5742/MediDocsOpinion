@@ -13,7 +13,6 @@ from app.core.constants import (
     DEFAULT_DEPARTMENT,
     DEFAULT_SECTION_NAMES,
     DOCUMENT_TYPES,
-    DOCUMENT_TYPE_TO_PURPOSE_MAPPING,
     FRONTEND_MESSAGES,
     ModelType,
 )
@@ -70,7 +69,6 @@ def get_common_context(active_page: str = "index") -> dict:
     return {
         "departments": DEFAULT_DEPARTMENT,
         "document_types": DOCUMENT_TYPES,
-        "document_purpose_mapping": DOCUMENT_TYPE_TO_PURPOSE_MAPPING,
         "available_models": get_available_models(),
         "tab_names": ["全文"] + list(DEFAULT_SECTION_NAMES),
         "active_page": active_page,

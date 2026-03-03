@@ -8,8 +8,7 @@ export interface Settings {
 
 // フォームデータ
 export interface FormData {
-    referralPurpose: string;
-    currentPrescription: string;
+    previousText: string;
     medicalText: string;
     additionalInfo: string;
 }
@@ -97,7 +96,6 @@ export interface MessagesMap {
 // グローバル変数の型宣言
 declare global {
     interface Window {
-        DOCUMENT_PURPOSE_MAPPING?: Record<string, string>;
         CSRF_TOKEN?: string;
         TAB_NAMES?: readonly string[];
         MESSAGES?: MessagesMap;

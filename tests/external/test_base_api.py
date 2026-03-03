@@ -73,7 +73,7 @@ class TestCreateSummaryPrompt:
         prompt = client.create_summary_prompt(
             medical_text="カルテデータ",
             additional_info="追加情報",
-            current_prescription="処方内容",
+            previous_text="処方内容",
             department="眼科",
             document_type="他院への紹介",
             doctor="橋本義弘",
@@ -81,7 +81,7 @@ class TestCreateSummaryPrompt:
 
         assert "【カルテ情報】" in prompt
         assert "カルテデータ" in prompt
-        assert "【退院時処方(現在の処方)】" in prompt
+        assert "【前回の記載】" in prompt
         assert "処方内容" in prompt
         assert "【追加情報】追加情報" in prompt
 
@@ -100,7 +100,7 @@ class TestCreateSummaryPrompt:
 
         assert "【カルテ情報】" in prompt
         assert "データ" in prompt
-        assert "【退院時処方(現在の処方)】\n処方" not in prompt
+        assert "【前回の記載】\n処方" not in prompt
         # 追加情報は空でも含まれる
         assert "【追加情報】" in prompt
 
@@ -118,11 +118,11 @@ class TestCreateSummaryPrompt:
         prompt = client.create_summary_prompt(
             medical_text="データ",
             additional_info="   ",
-            current_prescription="\t",
+            previous_text="\t",
         )
 
         # 空白のみは strip() で空文字列になるため、ユーザーデータは追加されない
-        assert "【退院時処方(現在の処方)】\n\t" not in prompt
+        assert "【前回の記載】\n\t" not in prompt
 
     @patch("app.external.base_api.get_prompt")
     @patch("app.external.base_api.get_db_session")

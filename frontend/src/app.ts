@@ -32,7 +32,6 @@ interface AppState {
     evaluationElapsedTime: number;
     evaluationTimerInterval: ReturnType<typeof setInterval> | null;
     init(): Promise<void>;
-    updateReferralPurpose(): void;
     updateDoctors(): Promise<void>;
     startTimer(): void;
     stopTimer(): void;
@@ -79,8 +78,7 @@ export function appState(): AppState {
 
         // Form
         form: {
-            referralPurpose: '',
-            currentPrescription: '',
+            previousText: '',
             medicalText: '',
             additionalInfo: ''
         },
@@ -115,14 +113,7 @@ export function appState(): AppState {
 
         async init() {
             await this.updateDoctors();
-            this.updateReferralPurpose();
             await this.updateSelectedModel();
-        },
-
-        updateReferralPurpose() {
-            if (window.DOCUMENT_PURPOSE_MAPPING && window.DOCUMENT_PURPOSE_MAPPING[this.settings.documentType]) {
-                this.form.referralPurpose = window.DOCUMENT_PURPOSE_MAPPING[this.settings.documentType];
-            }
         },
 
         async updateDoctors() {
@@ -196,8 +187,7 @@ export function appState(): AppState {
                     method: 'POST',
                     headers: getHeaders({ 'Content-Type': 'application/json' }),
                     body: JSON.stringify({
-                        referral_purpose: this.form.referralPurpose,
-                        current_prescription: this.form.currentPrescription,
+                        previous_text: this.form.previousText,
                         medical_text: this.form.medicalText,
                         additional_info: this.form.additionalInfo,
                         department: this.settings.department,
@@ -316,8 +306,7 @@ export function appState(): AppState {
                 method: 'POST',
                 headers: getHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
-                    referral_purpose: this.form.referralPurpose,
-                    current_prescription: this.form.currentPrescription,
+                    previous_text: this.form.previousText,
                     medical_text: this.form.medicalText,
                     additional_info: this.form.additionalInfo,
                     department: this.settings.department,
@@ -348,8 +337,7 @@ export function appState(): AppState {
 
         clearForm() {
             this.form = {
-                referralPurpose: '',
-                currentPrescription: '',
+                previousText: '',
                 medicalText: '',
                 additionalInfo: ''
             };
@@ -419,7 +407,7 @@ export function appState(): AppState {
                     body: JSON.stringify({
                         document_type: this.settings.documentType,
                         input_text: this.form.medicalText,
-                        current_prescription: this.form.currentPrescription,
+                        previous_text: this.form.previousText,
                         additional_info: this.form.additionalInfo,
                         output_summary: this.result.outputSummary
                     })
@@ -529,7 +517,7 @@ export function appState(): AppState {
                 body: JSON.stringify({
                     document_type: this.settings.documentType,
                     input_text: this.form.medicalText,
-                    current_prescription: this.form.currentPrescription,
+                    previous_text: this.form.previousText,
                     additional_info: this.form.additionalInfo,
                     output_summary: this.result.outputSummary
                 })

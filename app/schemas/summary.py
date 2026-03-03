@@ -4,8 +4,7 @@ from app.core.constants import DEFAULT_DOCUMENT_TYPE,ModelType
 
 
 class SummaryRequest(BaseModel):
-    referral_purpose: str = ""
-    current_prescription: str = ""
+    previous_text: str = ""
     medical_text: str = Field(..., min_length=1)
     additional_info: str = ""
     department: str = "default"

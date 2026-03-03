@@ -35,7 +35,7 @@ class BaseAPIClient(ABC):
         self,
         medical_text: str,
         additional_info: str = "",
-        current_prescription: str = "",
+        previous_text: str = "",
         department: str = "default",
         document_type: str = DEFAULT_DOCUMENT_TYPE,
         doctor: str = "default",
@@ -52,8 +52,8 @@ class BaseAPIClient(ABC):
 
         prompt = f"{prompt_template}\n【カルテ情報】\n{medical_text}"
 
-        if current_prescription.strip():
-            prompt += f"\n【退院時処方(現在の処方)】\n{current_prescription}"
+        if previous_text.strip():
+            prompt += f"\n【前回の記載】\n{previous_text}"
 
         prompt += f"\n【追加情報】{additional_info}"
 
@@ -79,7 +79,7 @@ class BaseAPIClient(ABC):
         self,
         medical_text: str,
         additional_info: str = "",
-        current_prescription: str = "",
+        previous_text: str = "",
         department: str = "default",
         document_type: str = DEFAULT_DOCUMENT_TYPE,
         doctor: str = "default",
@@ -97,7 +97,7 @@ class BaseAPIClient(ABC):
             prompt = self.create_summary_prompt(
                 medical_text,
                 additional_info,
-                current_prescription,
+                previous_text,
                 department,
                 document_type,
                 doctor,
@@ -124,7 +124,7 @@ class BaseAPIClient(ABC):
         self,
         medical_text: str,
         additional_info: str = "",
-        current_prescription: str = "",
+        previous_text: str = "",
         department: str = "default",
         document_type: str = DEFAULT_DOCUMENT_TYPE,
         doctor: str = "default",
@@ -143,7 +143,7 @@ class BaseAPIClient(ABC):
             prompt = self.create_summary_prompt(
                 medical_text,
                 additional_info,
-                current_prescription,
+                previous_text,
                 department,
                 document_type,
                 doctor,

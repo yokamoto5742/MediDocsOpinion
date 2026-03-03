@@ -33,7 +33,7 @@ def evaluate_output(http_request: Request, request: EvaluationRequest):
     return evaluation_service.execute_evaluation(
         document_type=request.document_type,
         input_text=request.input_text,
-        current_prescription=request.current_prescription,
+        previous_text=request.previous_text,
         additional_info=request.additional_info,
         output_summary=request.output_summary,
         user_ip=user_ip,
@@ -47,7 +47,7 @@ async def evaluate_output_stream(http_request: Request, request: EvaluationReque
     event_generator = execute_evaluation_stream(
         document_type=request.document_type,
         input_text=request.input_text,
-        current_prescription=request.current_prescription,
+        previous_text=request.previous_text,
         additional_info=request.additional_info,
         output_summary=request.output_summary,
         user_ip=user_ip,

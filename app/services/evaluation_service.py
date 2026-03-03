@@ -62,7 +62,7 @@ def _validate_and_get_prompt(
 def build_evaluation_prompt(
     prompt_template: str,
     input_text: str,
-    current_prescription: str,
+    previous_text: str,
     additional_info: str,
     output_summary: str
 ) -> str:
@@ -72,8 +72,8 @@ def build_evaluation_prompt(
 【カルテ記載】
 {input_text}
 
-【現在の処方】
-{current_prescription}
+【前回の記載】
+{previous_text}
 
 【追加情報】
 {additional_info}
@@ -86,7 +86,7 @@ def build_evaluation_prompt(
 def execute_evaluation(
     document_type: str,
     input_text: str,
-    current_prescription: str,
+    previous_text: str,
     additional_info: str,
     output_summary: str,
     user_ip: str | None = None,
@@ -101,7 +101,7 @@ def execute_evaluation(
 
     # サニタイゼーション適用
     input_text = sanitize_medical_text(input_text)
-    current_prescription = sanitize_medical_text(current_prescription or "")
+    previous_text = sanitize_medical_text(previous_text or "")
     additional_info = sanitize_medical_text(additional_info or "")
     output_summary = sanitize_medical_text(output_summary)
 
@@ -123,7 +123,7 @@ def execute_evaluation(
     full_prompt = build_evaluation_prompt(
         prompt_template,
         input_text,
-        current_prescription,
+        previous_text,
         additional_info,
         output_summary
     )
@@ -179,7 +179,7 @@ def execute_evaluation(
 def _run_sync_evaluation(
     document_type: str,
     input_text: str,
-    current_prescription: str,
+    previous_text: str,
     additional_info: str,
     output_summary: str,
     prompt_template: str
@@ -188,7 +188,7 @@ def _run_sync_evaluation(
     full_prompt = build_evaluation_prompt(
         prompt_template,
         input_text,
-        current_prescription,
+        previous_text,
         additional_info,
         output_summary
     )
@@ -208,7 +208,7 @@ def _run_sync_evaluation(
 async def execute_evaluation_stream(
     document_type: str,
     input_text: str,
-    current_prescription: str,
+    previous_text: str,
     additional_info: str,
     output_summary: str,
     user_ip: str | None = None,
@@ -223,7 +223,7 @@ async def execute_evaluation_stream(
 
     # サニタイゼーション適用
     input_text = sanitize_medical_text(input_text)
-    current_prescription = sanitize_medical_text(current_prescription or "")
+    previous_text = sanitize_medical_text(previous_text or "")
     additional_info = sanitize_medical_text(additional_info or "")
     output_summary = sanitize_medical_text(output_summary)
 
@@ -247,7 +247,7 @@ async def execute_evaluation_stream(
     async for item in stream_with_heartbeat(
         sync_func=_run_sync_evaluation,
         sync_func_args=(
-            document_type, input_text, current_prescription,
+            document_type, input_text, previous_text,
             additional_info, output_summary, prompt_template
         ),
         start_message=MESSAGES["STATUS"]["EVALUATION_START"],

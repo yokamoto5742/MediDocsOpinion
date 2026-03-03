@@ -63,8 +63,7 @@ def test_generate_summary_success(client, test_db, csrf_headers, mock_summary_re
         payload = {
             "medical_text": "患者は60歳男性。2型糖尿病にて加療中。",
             "additional_info": "HbA1c 7.5%",
-            "referral_purpose": "血糖コントロール",
-            "current_prescription": "メトホルミン500mg",
+            "previous_text": "メトホルミン500mg",
             "department": "default",
             "doctor": "default",
             "document_type": "他院への紹介",
@@ -99,8 +98,7 @@ def test_generate_summary_validation_error(client, test_db, csrf_headers, mock_s
         payload = {
             "medical_text": "短",  # 非常に短い入力
             "additional_info": "",
-            "referral_purpose": "",
-            "current_prescription": "",
+            "previous_text": "",
             "department": "default",
             "doctor": "default",
             "document_type": "他院への紹介",
@@ -129,8 +127,7 @@ def test_generate_summary_model_switched(client, test_db, csrf_headers, mock_sum
         payload = {
             "medical_text": long_text,
             "additional_info": "",
-            "referral_purpose": "",
-            "current_prescription": "",
+            "previous_text": "",
             "department": "default",
             "doctor": "default",
             "document_type": "他院への紹介",

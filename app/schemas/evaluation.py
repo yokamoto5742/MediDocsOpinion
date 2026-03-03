@@ -6,7 +6,7 @@ from pydantic import BaseModel
 class EvaluationRequest(BaseModel):
     document_type: str
     input_text: str
-    current_prescription: str = ""
+    previous_text: str = ""
     additional_info: str = ""
     output_summary: str
 

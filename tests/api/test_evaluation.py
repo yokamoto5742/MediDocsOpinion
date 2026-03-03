@@ -53,7 +53,7 @@ def test_evaluate_output_success(client, test_db, csrf_headers, mock_evaluation_
         payload = {
             "document_type": "他院への紹介",
             "input_text": "患者は60歳男性。2型糖尿病にて加療中。",
-            "current_prescription": "メトホルミン500mg",
+            "previous_text": "メトホルミン500mg",
             "additional_info": "HbA1c 7.5%",
             "output_summary": "主病名: 糖尿病\n治療経過: インスリン治療中",
         }
@@ -80,7 +80,7 @@ def test_evaluate_output_no_output_error(client, test_db, csrf_headers, mock_eva
         payload = {
             "document_type": "他院への紹介",
             "input_text": "患者情報",
-            "current_prescription": "",
+            "previous_text": "",
             "additional_info": "",
             "output_summary": "",
         }
@@ -112,7 +112,7 @@ def test_evaluate_output_model_missing_error(client, test_db, csrf_headers):
         payload = {
             "document_type": "他院への紹介",
             "input_text": "患者情報",
-            "current_prescription": "",
+            "previous_text": "",
             "additional_info": "",
             "output_summary": "出力内容",
         }
@@ -304,7 +304,7 @@ def test_evaluate_output_stream_success(client, test_db, csrf_headers):
         payload = {
             "document_type": "他院への紹介",
             "input_text": "患者は60歳男性。2型糖尿病にて加療中。",
-            "current_prescription": "メトホルミン500mg",
+            "previous_text": "メトホルミン500mg",
             "additional_info": "HbA1c 7.5%",
             "output_summary": "主病名: 糖尿病\n治療経過: インスリン治療中",
         }
@@ -325,7 +325,7 @@ def test_evaluate_output_stream_error(client, test_db, csrf_headers):
         payload = {
             "document_type": "他院への紹介",
             "input_text": "患者情報",
-            "current_prescription": "",
+            "previous_text": "",
             "additional_info": "",
             "output_summary": "",
         }

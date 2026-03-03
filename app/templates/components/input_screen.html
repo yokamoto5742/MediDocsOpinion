@@ -4,8 +4,7 @@
 <template x-if="currentScreen === 'input'">
 <div>
     <form @submit.prevent="generateSummary()" class="space-y-2">
-        {{ m.textarea_field("紹介目的", "form.referralPurpose", 1) }}
-        {{ m.textarea_field("現在の処方", "form.currentPrescription", 1) }}
+        {{ m.textarea_field("前回の記載", "form.previousText", 1) }}
         {{ m.textarea_field("カルテ記載", "form.medicalText", 3) }}
         {{ m.textarea_field("追加情報", "form.additionalInfo", 1) }}
         <p class="text-sm text-white">{{ messages.VALIDATION.NO_PERSONAL_INFO }}</p>
