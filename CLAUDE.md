@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-診療情報提供書を生成AIで作成するFastAPIベースのWebアプリ。Claude（AWS Bedrock）とGemini（Google Vertex AI）を統合し、入力量に応じて自動モデル切り替えを行う。
+主治医意見書を生成AIで作成するFastAPIベースのWebアプリ。Claude（AWS Bedrock）とGemini（Google Vertex AI）を統合し、入力量に応じて自動モデル切り替えを行う。
 
 ## Commands
 
