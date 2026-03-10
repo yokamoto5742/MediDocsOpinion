@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from functools import lru_cache
@@ -11,37 +10,6 @@ from app.core.constants import ModelType
 logger = logging.getLogger(__name__)
 
 _SECRET_NAME = os.getenv("AWS_SECRET_NAME", "medidocs/production")
-
-
-def _load_aws_secrets() -> None:
-    """AWS Secrets ManagerのシークレットをOSの環境変数に展開"""
-    try:
-        import boto3
-    except ImportError:
-        logger.warning("boto3 がインストールされていません。Secrets Manager をスキップします")
-        return
-
-    logger.info("AWS_SECRET_NAME=%s", _SECRET_NAME)
-    region = os.getenv("AWS_REGION", "ap-northeast-1")
-    try:
-        client = boto3.client("secretsmanager", region_name=region)
-        response = client.get_secret_value(SecretId=_SECRET_NAME)
-        secrets: dict[str, str] = json.loads(response["SecretString"])
-        logger.info("Secrets Manager のキー一覧: %s", list(secrets.keys()))
-        injected = []
-        skipped = []
-        for key, value in secrets.items():
-            if key not in os.environ or os.environ[key] == "":
-                os.environ[key] = str(value)
-                injected.append(key)
-            else:
-                skipped.append(key)
-        if injected:
-            logger.info("Secrets Manager から環境変数を展開しました: %s", injected)
-        if skipped:
-            logger.info("既存の環境変数のためスキップしました: %s", skipped)
-    except Exception as e:
-        logger.warning("Secrets Manager からの読み込みに失敗しました: %s", e)
 
 
 class Settings(BaseSettings):
@@ -79,11 +47,6 @@ class Settings(BaseSettings):
     gemini_thinking_level: str = "HIGH"
     gemini_evaluation_model: str | None = None
 
-    # Cloudflare AI Gateway
-    cloudflare_account_id: str | None = None
-    cloudflare_gateway_id: str | None = None
-    cloudflare_aig_token: str | None = None
-
     # Application
     max_input_tokens: int = 200000
     min_input_tokens: int = 100
@@ -91,6 +54,11 @@ class Settings(BaseSettings):
     prompt_management: bool = True
     app_type: str = "default"
     selected_ai_model: str = ModelType.CLAUDE.value
+
+    # 日次利用制限
+    daily_request_limit: int = 100
+    daily_input_token_limit: int = 5000000
+    daily_output_token_limit: int = 100000
 
     # CSRF認証
     csrf_secret_key: str = "default-csrf-secret-key"
@@ -116,6 +84,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    _load_aws_secrets()
-    s = Settings()
-    return s
+    return Settings()

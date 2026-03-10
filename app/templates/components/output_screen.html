@@ -6,7 +6,7 @@
     <!-- ボタン -->
     <div class="mb-6 flex gap-4">
         {{ m.primary_button("コピー", click="copyCurrentTab()") }}
-        {{ m.success_button("出力評価", "isEvaluating", "評価中...", "evaluateOutput()") }}
+        {{ m.success_button("出力評価", "isEvaluating", "評価中...", "evaluateOutput()", "!evaluationResult.result") }}
         {{ m.accent_button("評価確認", "showEvaluation()", "evaluationResult.result") }}
         {{ m.secondary_button("クリアして戻る", "backToInput()") }}
     </div>

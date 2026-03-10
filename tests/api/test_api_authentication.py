@@ -1,9 +1,10 @@
 """CSRF認証の統合テスト"""
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
 from app.core.security import generate_csrf_token
+from app.schemas.summary import SummaryResponse
 
 
 class TestCsrfAuthentication:
@@ -44,15 +45,30 @@ class TestCsrfAuthentication:
 
         token = generate_csrf_token(mock_settings)
 
-        response = client.post(
-            "/api/summary/generate",
-            json={
-                "medical_text": "test",
-                "department": "内科",
-                "document_type": "診療情報提供書",
-            },
-            headers={"X-CSRF-Token": token},
+        mock_response = SummaryResponse(
+            success=True,
+            output_summary="テスト出力",
+            parsed_summary={},
+            input_tokens=10,
+            output_tokens=20,
+            processing_time=1.0,
+            model_used="Claude",
+            model_switched=False,
         )
+
+        with patch(
+            "app.api.summary.execute_summary_generation",
+            return_value=mock_response,
+        ):
+            response = client.post(
+                "/api/summary/generate",
+                json={
+                    "medical_text": "test",
+                    "department": "内科",
+                    "document_type": "診療情報提供書",
+                },
+                headers={"X-CSRF-Token": token},
+            )
         # CSRF認証は成功（他のエラーがあれば別の理由）
         assert response.status_code not in [401, 403]
 

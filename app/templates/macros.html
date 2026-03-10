@@ -29,10 +29,11 @@
 {% endmacro %}
 
 {# 成功ボタン（評価ボタン用） #}
-{% macro success_button(text, disabled_model=None, loading_text=None, click=None) %}
+{% macro success_button(text, disabled_model=None, loading_text=None, click=None, show_condition=None) %}
 <button type="button"
     {% if click %}@click="{{ click }}"{% endif %}
     {% if disabled_model %}:disabled="{{ disabled_model }}"{% endif %}
+    {% if show_condition %}x-show="{{ show_condition }}"{% endif %}
     class="btn-success">
     {% if loading_text %}
     <span x-show="!{{ disabled_model }}">{{ text }}</span>
