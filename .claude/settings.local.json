@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('セッションが終了しました', 'Claude Code', 'OK', 'Information')\""
+            "command": "cmd /c start /b powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('セッションが終了しました', 'Claude Code', 'OK', 'Information')\""
           }
         ]
       }
