@@ -1,6 +1,6 @@
 {
   "medidocsTaskRole": {
-    "説昁E: "ECSタスクロール - BedrockのInvoke権限�Eみ付丁E,
+    "Description": "ECS Task Role - Bedrock Invoke permissions only",
     "AssumeRolePolicyDocument": {
       "Version": "2012-10-17",
       "Statement": [
@@ -23,17 +23,17 @@
             "bedrock:InvokeModelWithResponseStream"
           ],
           "Resource": [
-				"arn:aws:bedrock:ap-northeast-1::foundation-model/*",
-				"arn:aws:bedrock:ap-northeast-1:149050210156:inference-profile/*",
-				"arn:aws:bedrock:ap-northeast-3::foundation-model/*",
-				"arn:aws:bedrock:ap-northeast-3:149050210156:inference-profile/*"
+            "arn:aws:bedrock:ap-northeast-1::foundation-model/*",
+            "arn:aws:bedrock:ap-northeast-1:149050210156:inference-profile/*",
+            "arn:aws:bedrock:ap-northeast-3::foundation-model/*",
+            "arn:aws:bedrock:ap-northeast-3:149050210156:inference-profile/*"
           ]
         }
       ]
     }
   },
   "ecsTaskExecutionRole": {
-    "説昁E: "ECSタスク実行ロール - ECRプル、Secrets Manager読取、CloudWatch Logs書き込み",
+    "Description": "ECS Task Execution Role - ECR pull, Secrets Manager read, CloudWatch Logs write",
     "AssumeRolePolicyDocument": {
       "Version": "2012-10-17",
       "Statement": [

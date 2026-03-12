@@ -9,20 +9,24 @@
   "containerDefinitions": [
     {
       "name": "medidocs-opinion",
-      "image": "149050210156.dkr.ecr.ap-northeast-1.amazonaws.com/medidocs-opinion:latest",
-      "essential": true,
+      "image": "149050210156.dkr.ecr.ap-northeast-1.amazonaws.com/medidocs-opinion:2877255baf2d3db7a5a2f81dce0eb731f1c8753b",
+      "cpu": 0,
       "portMappings": [
         {
           "containerPort": 8000,
+          "hostPort": 8000,
           "protocol": "tcp"
         }
       ],
+      "essential": true,
       "environment": [
         {
           "name": "AWS_DEFAULT_REGION",
           "value": "ap-northeast-1"
         }
       ],
+      "mountPoints": [],
+      "volumesFrom": [],
       "secrets": [
         {
           "name": "POSTGRES_HOST",
@@ -34,11 +38,11 @@
         },
         {
           "name": "POSTGRES_USER",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_USER::"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:rds!db-7e7da41d-bf28-4e97-b9e6-ee14852bce56-oPxIiP:username::"
         },
         {
           "name": "POSTGRES_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:POSTGRES_PASSWORD::"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:rds!db-7e7da41d-bf28-4e97-b9e6-ee14852bce56-oPxIiP:password::"
         },
         {
           "name": "POSTGRES_DB",
@@ -89,18 +93,6 @@
           "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:MAX_TOKEN_THRESHOLD::"
         },
         {
-          "name": "CLOUDFLARE_ACCOUNT_ID",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_ACCOUNT_ID::"
-        },
-        {
-          "name": "CLOUDFLARE_GATEWAY_ID",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_GATEWAY_ID::"
-        },
-        {
-          "name": "CLOUDFLARE_AIG_TOKEN",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:CLOUDFLARE_AIG_TOKEN::"
-        },
-        {
           "name": "AWS_REGION",
           "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:AWS_REGION::"
         },
@@ -111,8 +103,28 @@
         {
           "name": "GEMINI_THINKING_LEVEL",
           "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:GEMINI_THINKING_LEVEL::"
+        },
+        {
+          "name": "DAILY_REQUEST_LIMIT",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:DAILY_REQUEST_LIMIT::"
+        },
+        {
+          "name": "DAILY_INPUT_TOKEN_LIMIT",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:DAILY_INPUT_TOKEN_LIMIT::"
+        },
+        {
+          "name": "DAILY_OUTPUT_TOKEN_LIMIT",
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/production:DAILY_OUTPUT_TOKEN_LIMIT::"
         }
       ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/medidocs-opinion",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
       "healthCheck": {
         "command": [
           "CMD-SHELL",
@@ -122,14 +134,6 @@
         "timeout": 5,
         "retries": 3,
         "startPeriod": 60
-      },
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/medidocs-opinion",
-          "awslogs-region": "ap-northeast-1",
-          "awslogs-stream-prefix": "ecs"
-        }
       }
     }
   ]
