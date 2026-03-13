@@ -1,5 +1,4 @@
 import logging
-from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -9,16 +8,9 @@ from app.core.config import get_settings
 from app.core.constants import get_message
 from app.core.database import get_db_session
 from app.models.usage import SummaryUsage
+from app.schemas.usage import DailyUsageSummary
 
 JST = ZoneInfo("Asia/Tokyo")
-
-
-@dataclass
-class DailyUsageSummary:
-    """当日の使用量サマリ"""
-    request_count: int
-    total_input_tokens: int
-    total_output_tokens: int
 
 
 def get_daily_usage() -> DailyUsageSummary:
