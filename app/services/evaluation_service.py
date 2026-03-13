@@ -73,7 +73,7 @@ def build_evaluation_prompt(
 【カルテ記載】
 {input_text}
 
-【退院時処方(現在の処方)】
+【前回の記載】
 {previous_text}
 
 【追加情報】
