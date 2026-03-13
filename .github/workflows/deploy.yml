@@ -12,7 +12,7 @@ env:
   ECS_SERVICE: medidocs-opinion-service
   CONTAINER_NAME: medidocs-opinion
 
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 permissions:
   id-token: write   # OIDC認証に必要
@@ -25,7 +25,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
