@@ -55,7 +55,7 @@ def validate_input(medical_text: str) -> tuple[bool, str | None]:
 def execute_summary_generation(
     medical_text: str,
     additional_info: str,
-    current_prescription: str,
+    previous_text: str,
     department: str,
     doctor: str,
     document_type: str,
@@ -82,7 +82,7 @@ def execute_summary_generation(
     # サニタイゼーション適用
     medical_text = sanitize_medical_text(medical_text)
     additional_info = sanitize_medical_text(additional_info or "")
-    current_prescription = sanitize_medical_text(current_prescription or "")
+    previous_text = sanitize_medical_text(previous_text or "")
 
     # 入力検証
     is_valid, error_msg = validate_input(medical_text)
@@ -134,7 +134,7 @@ def execute_summary_generation(
             provider=provider,
             medical_text=medical_text,
             additional_info=additional_info,
-            current_prescription=current_prescription,
+            previous_text=previous_text,
             department=department,
             document_type=document_type,
             doctor=doctor,
@@ -192,7 +192,7 @@ def _run_sync_generation(
     provider: str,
     medical_text: str,
     additional_info: str,
-    current_prescription: str,
+    previous_text: str,
     department: str,
     document_type: str,
     doctor: str,
@@ -203,7 +203,7 @@ def _run_sync_generation(
         provider=provider,
         medical_text=medical_text,
         additional_info=additional_info,
-        current_prescription=current_prescription,
+        previous_text=previous_text,
         department=department,
         document_type=document_type,
         doctor=doctor,
@@ -222,7 +222,7 @@ def _run_sync_generation(
 async def execute_summary_generation_stream(
     medical_text: str,
     additional_info: str,
-    current_prescription: str,
+    previous_text: str,
     department: str,
     doctor: str,
     document_type: str,
@@ -250,7 +250,7 @@ async def execute_summary_generation_stream(
     # サニタイゼーション適用
     medical_text = sanitize_medical_text(medical_text)
     additional_info = sanitize_medical_text(additional_info or "")
-    current_prescription = sanitize_medical_text(current_prescription or "")
+    previous_text = sanitize_medical_text(previous_text or "")
 
     # 入力検証
     is_valid, error_msg = validate_input(medical_text)
@@ -309,7 +309,7 @@ async def execute_summary_generation_stream(
         sync_func=_run_sync_generation,
         sync_func_args=(
             provider, medical_text, additional_info,
-            current_prescription, department, document_type, doctor, model_name
+            previous_text, department, document_type, doctor, model_name
         ),
         start_message=MESSAGES["STATUS"]["DOCUMENT_GENERATION_START"],
         running_status="generating",
