@@ -85,7 +85,7 @@ createdb medidocs
 
 環境変数は以下の優先順位で読み込まれます：
 1. OS環境変数（既存の値は上書きされない）
-2. AWS Secrets Manager（`AWS_SECRET_NAME`で指定、デフォルト: `medidocs/prod`）
+2. AWS Secrets Manager
 3. `.env`ファイル
 
 ## 環境変数の設定
@@ -114,9 +114,7 @@ DATABASE_URL=postgresql://user:password@host:port/database
 
 ### Claude API設定(AWS Bedrock)
 ```env
-# ローカル開発環境（アクセスキーを使用する場合）
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+# ローカル開発環境
 AWS_REGION=ap-northeast-1
 ANTHROPIC_MODEL=anthropic.claude-3-5-sonnet-20241022-v2:0
 
@@ -160,8 +158,6 @@ DAILY_REQUEST_LIMIT=100
 DAILY_INPUT_TOKEN_LIMIT=5000000
 DAILY_OUTPUT_TOKEN_LIMIT=100000
 
-# AWS Secrets Manager（オプション）
-AWS_SECRET_NAME=medidocs/prod
 ```
 
 ## 使用方法
@@ -276,13 +272,6 @@ frontend/                  # フロントエンド（Vite + TypeScript + Tailwin
 │       └── main.css      # Tailwind CSS + カスタムスタイル
 └── DEVELOPMENT.md        # フロントエンド開発ガイド
 
-tests/                    # テストスイート
-├── conftest.py          # 共有フィクスチャ
-├── api/                 # APIエンドポイントテスト
-├── core/                # コア機能テスト
-├── external/            # 外部APIテスト
-├── services/            # ビジネスロジックテスト
-└── test_utils/          # ユーティリティテスト
 ```
 
 ## アーキテクチャと設計パターン
@@ -311,7 +300,7 @@ result = client.generate_summary(medical_text, additional_info, ...)
 
 - `determine_model()`: 入力文字数とDB設定から最適なモデルを決定
   - `model_explicitly_selected=False`の場合、DBから医師/診療科/文書タイプ別のモデル設定を取得
-  - 入力が`MAX_TOKEN_THRESHOLD`（デフォルト100,000文字）を超え、Claudeが選択されている場合、自動的にGeminiに切り替え
+  - 入力が`MAX_TOKEN_THRESHOLD`を超え、Claudeが選択されている場合、自動的にGeminiに切り替え
   - Geminiが設定されていない場合はエラーを返す
 - `get_provider_and_model()`: モデル名からプロバイダーとモデルのIDを取得
 - 閾値は環境変数`MAX_TOKEN_THRESHOLD`で調整可能
@@ -423,17 +412,10 @@ alembic downgrade -1
 
 フロントエンド開発の詳細については、[frontend/DEVELOPMENT.md](frontend/DEVELOPMENT.md)を参照してください。
 
-**開発サーバー開始:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
 ## 型チェック
 
 ```bash
-# 型チェック実行（app/のみ対象、tests/と scripts/は除外）
+# 型チェック実行
 pyright
 ```
 
@@ -483,7 +465,6 @@ pyright
   - Vertex AIが有効化されているか確認
 
 ### テスト失敗
-- `.env.test`ファイルが正しく設定されているか確認
 - データベースマイグレーションが完了しているか確認
 - 外部API呼び出しがモックされているか確認
 
@@ -511,11 +492,11 @@ pyright
 
 **日次入力トークン制限超過**
 - エラーメッセージ：「本日の入力トークン制限（N トークン）を超過しました。明日再度お試しください」
-- `DAILY_INPUT_TOKEN_LIMIT`環境変数を確認（デフォルト5,000,000トークン）
+- `DAILY_INPUT_TOKEN_LIMIT`環境変数を確認
 
 **日次出力トークン制限超過**
 - エラーメッセージ：「本日の出力トークン制限（N トークン）を超過しました。明日再度お試しください」
-- `DAILY_OUTPUT_TOKEN_LIMIT`環境変数を確認（デフォルト100,000トークン）
+- `DAILY_OUTPUT_TOKEN_LIMIT`環境変数を確認
 
 ## コントリビューション
 
@@ -525,7 +506,7 @@ pyright
 - インポート順序: 標準ライブラリ → サードパーティ → ローカルモジュール
 - 各グループ内でアルファベット順にソート（`import`が先、`from`は後）
 - 関数サイズは**50行以下**を目標
-- コメントは複雑なロジックのみ日本語で記述（文末に句点不要）
+- コメントは複雑なロジックのみ日本語で記述
 
 ### コミットメッセージ
 - 従来のコミット形式を使用：`✨ feat`, `🐛 fix`, `📝 docs`, `♻️ refactor`, `✅ test`

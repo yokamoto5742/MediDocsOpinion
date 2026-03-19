@@ -40,7 +40,7 @@ def main() -> None:
     scripts_dir = Path(__file__).parent
     project_root = scripts_dir.parent
     tests_root = project_root / "tests"
-    output_file = scripts_dir / "test_structure.txt"
+    output_file = scripts_dir / "testcode_structure.txt"
 
     if not tests_root.exists():
         print(f"エラー: テストディレクトリ '{tests_root}' が見つかりません")
