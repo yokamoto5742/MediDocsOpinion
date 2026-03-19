@@ -30,7 +30,7 @@ class TestSyncSummaryGeneration:
                 json={
                     "medical_text": VALID_MEDICAL_TEXT,
                     "additional_info": "HbA1c 9.2%",
-                    "current_prescription": "メトホルミン500mg",
+                    "previous_text": "メトホルミン500mg",
                     "department": "内科",
                     "doctor": "default",
                     "document_type": "退院時サマリ",

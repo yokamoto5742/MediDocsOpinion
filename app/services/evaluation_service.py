@@ -39,12 +39,12 @@ def _validate_and_get_prompt(
 
     # プロンプトインジェクション検出
     if output_summary:
-        is_valid, error_msg = validate_medical_input(output_summary, settings.max_input_tokens)
+        is_valid, error_msg = validate_medical_input(output_summary)
         if not is_valid:
             return None, error_msg
 
     if input_text:
-        is_valid, error_msg = validate_medical_input(input_text, settings.max_input_tokens)
+        is_valid, error_msg = validate_medical_input(input_text)
         if not is_valid:
             return None, error_msg
 

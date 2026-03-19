@@ -12,7 +12,8 @@ from app.services.usage_service import save_usage
 class TestValidateInput:
     """validate_input 関数のテスト"""
 
-    def test_validate_input_valid(self):
+    @patch("app.services.summary_service.validate_medical_input", return_value=(True, None))
+    def test_validate_input_valid(self, _mock_validate):
         """入力検証 - 正常系"""
         is_valid, error = validate_input("これは有効なカルテ情報です" * 10)
         assert is_valid is True
@@ -56,8 +57,9 @@ class TestValidateInput:
         assert is_valid is False
         assert error == MESSAGES["VALIDATION"]["INPUT_TOO_LONG"]
 
+    @patch("app.services.summary_service.validate_medical_input", return_value=(True, None))
     @patch("app.services.summary_service.settings")
-    def test_validate_input_exactly_min_length(self, mock_settings):
+    def test_validate_input_exactly_min_length(self, mock_settings, _mock_validate):
         """入力検証 - ちょうど最小文字数は有効"""
         mock_settings.min_input_tokens = 10
         mock_settings.max_input_tokens = 100000
@@ -66,8 +68,10 @@ class TestValidateInput:
         assert is_valid is True
         assert error is None
 
+    @patch("app.services.summary_service.validate_medical_input",
+           return_value=(False, "入力テキストに不正なパターンが検出されました"))
     @patch("app.services.summary_service.settings")
-    def test_validate_input_prompt_injection(self, mock_settings):
+    def test_validate_input_prompt_injection(self, mock_settings, _mock_validate):
         """入力検証 - プロンプトインジェクションを検出"""
         mock_settings.min_input_tokens = 10
         mock_settings.max_input_tokens = 100000
@@ -341,7 +345,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="眼科",
                 doctor="橋本義弘",
                 document_type="他院への紹介",
@@ -365,7 +369,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="テキスト",
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -386,7 +390,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="短い",
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -408,7 +412,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -432,7 +436,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -457,7 +461,7 @@ class TestExecuteSummaryGeneration:
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -489,7 +493,7 @@ class TestExecuteSummaryGenerationStream:
             events = await self._collect(execute_summary_generation_stream(
                 medical_text="テキスト",
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -513,7 +517,7 @@ class TestExecuteSummaryGenerationStream:
             events = await self._collect(execute_summary_generation_stream(
                 medical_text="短い",
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -535,7 +539,7 @@ class TestExecuteSummaryGenerationStream:
             events = await self._collect(execute_summary_generation_stream(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="default",
                 doctor="default",
                 document_type="返書",
@@ -566,7 +570,7 @@ class TestExecuteSummaryGenerationStream:
             events = await self._collect(execute_summary_generation_stream(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
-                current_prescription="",
+                previous_text="",
                 department="眼科",
                 doctor="橋本義弘",
                 document_type="他院への紹介",

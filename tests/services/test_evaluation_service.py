@@ -14,14 +14,14 @@ class TestBuildEvaluationPrompt:
         """評価プロンプト構築 - 正常系"""
         prompt_template = "以下の出力を評価してください。"
         input_text = "患者は60歳男性。"
-        current_prescription = "メトホルミン500mg"
+        previous_text = "メトホルミン500mg"
         additional_info = "HbA1c 7.5%"
         output_summary = "主病名: 糖尿病"
 
         result = build_evaluation_prompt(
             prompt_template,
             input_text,
-            current_prescription,
+            previous_text,
             additional_info,
             output_summary
         )
@@ -29,8 +29,8 @@ class TestBuildEvaluationPrompt:
         assert prompt_template in result
         assert "【カルテ記載】" in result
         assert input_text in result
-        assert "【退院時処方(現在の処方)】" in result
-        assert current_prescription in result
+        assert "【前回の記載】" in result
+        assert previous_text in result
         assert "【追加情報】" in result
         assert additional_info in result
         assert "【生成された出力】" in result
@@ -53,7 +53,7 @@ class TestBuildEvaluationPrompt:
         result = build_evaluation_prompt("テンプレート", "カルテ", "処方", "追加", "出力")
 
         カルテ_pos = result.index("【カルテ記載】")
-        処方_pos = result.index("【退院時処方(現在の処方)】")
+        処方_pos = result.index("【前回の記載】")
         追加_pos = result.index("【追加情報】")
         出力_pos = result.index("【生成された出力】")
 
@@ -79,8 +79,9 @@ class TestValidateAndGetPrompt:
         assert prompt is None
         assert error == MESSAGES["VALIDATION"]["EVALUATION_NO_OUTPUT"]
 
+    @patch("app.services.evaluation_service.validate_medical_input", return_value=(True, None))
     @patch("app.services.evaluation_service.settings")
-    def test_no_evaluation_model_returns_error(self, mock_settings):
+    def test_no_evaluation_model_returns_error(self, mock_settings, _mock_validate):
         """gemini_evaluation_modelが未設定の場合はエラーを返す"""
         mock_settings.max_input_tokens = 100000
         mock_settings.gemini_evaluation_model = None
@@ -90,8 +91,10 @@ class TestValidateAndGetPrompt:
         assert prompt is None
         assert error == MESSAGES["CONFIG"]["EVALUATION_MODEL_MISSING"]
 
+    @patch("app.services.evaluation_service.validate_medical_input",
+           return_value=(False, "入力テキストに不正なパターンが検出されました"))
     @patch("app.services.evaluation_service.settings")
-    def test_prompt_injection_in_output_returns_error(self, mock_settings):
+    def test_prompt_injection_in_output_returns_error(self, mock_settings, _mock_validate):
         """output_summaryにプロンプトインジェクションが含まれる場合はエラー"""
         mock_settings.max_input_tokens = 100000
         mock_settings.gemini_evaluation_model = "gemini-1.5-pro"
@@ -103,9 +106,10 @@ class TestValidateAndGetPrompt:
         assert error is not None
         assert "不正なパターン" in error
 
+    @patch("app.services.evaluation_service.validate_medical_input", return_value=(True, None))
     @patch("app.services.evaluation_service.get_db_session")
     @patch("app.services.evaluation_service.settings")
-    def test_no_prompt_in_db_returns_error(self, mock_settings, mock_db_session):
+    def test_no_prompt_in_db_returns_error(self, mock_settings, mock_db_session, _mock_validate):
         """DBにプロンプトが存在しない場合はエラーを返す"""
         mock_settings.max_input_tokens = 100000
         mock_settings.gemini_evaluation_model = "gemini-1.5-pro"
@@ -120,9 +124,10 @@ class TestValidateAndGetPrompt:
         assert error is not None
         assert "退院時サマリ" in error
 
+    @patch("app.services.evaluation_service.validate_medical_input", return_value=(True, None))
     @patch("app.services.evaluation_service.get_db_session")
     @patch("app.services.evaluation_service.settings")
-    def test_success_returns_prompt_content(self, mock_settings, mock_db_session):
+    def test_success_returns_prompt_content(self, mock_settings, mock_db_session, _mock_validate):
         """正常系: DBからプロンプトを取得して返す"""
         mock_settings.max_input_tokens = 100000
         mock_settings.gemini_evaluation_model = "gemini-1.5-pro"
@@ -173,7 +178,7 @@ class TestExecuteEvaluation:
             result = execute_evaluation(
                 document_type="退院時サマリ",
                 input_text="カルテ情報" * 10,
-                current_prescription="薬剤A",
+                previous_text="薬剤A",
                 additional_info="追加情報",
                 output_summary="サマリ出力内容",
             )
@@ -192,7 +197,7 @@ class TestExecuteEvaluation:
             result = execute_evaluation(
                 document_type="退院時サマリ",
                 input_text="テキスト",
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             )
@@ -211,7 +216,7 @@ class TestExecuteEvaluation:
             result = execute_evaluation(
                 document_type="退院時サマリ",
                 input_text="カルテ情報" * 10,
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             )
@@ -238,7 +243,7 @@ class TestExecuteEvaluation:
             result = execute_evaluation(
                 document_type="退院時サマリ",
                 input_text="カルテ情報" * 10,
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             )
@@ -264,7 +269,7 @@ class TestExecuteEvaluation:
             result = execute_evaluation(
                 document_type="退院時サマリ",
                 input_text="カルテ情報" * 10,
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             )
@@ -292,7 +297,7 @@ class TestExecuteEvaluationStream:
             events = await self._collect(execute_evaluation_stream(
                 document_type="退院時サマリ",
                 input_text="テキスト",
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             ))
@@ -314,7 +319,7 @@ class TestExecuteEvaluationStream:
             events = await self._collect(execute_evaluation_stream(
                 document_type="退院時サマリ",
                 input_text="テキスト",
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ",
             ))
@@ -339,7 +344,7 @@ class TestExecuteEvaluationStream:
             events = await self._collect(execute_evaluation_stream(
                 document_type="退院時サマリ",
                 input_text="カルテ情報" * 10,
-                current_prescription="",
+                previous_text="",
                 additional_info="",
                 output_summary="サマリ内容",
             ))

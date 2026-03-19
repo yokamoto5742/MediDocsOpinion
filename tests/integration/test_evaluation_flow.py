@@ -43,7 +43,7 @@ class TestSyncEvaluation:
                 json={
                     "document_type": "退院時サマリ",
                     "input_text": "患者は67歳男性。糖尿病にて加療中。",
-                    "current_prescription": "メトホルミン500mg",
+                    "previous_text": "メトホルミン500mg",
                     "additional_info": "",
                     "output_summary": VALID_OUTPUT_SUMMARY,
                 },
@@ -67,7 +67,7 @@ class TestSyncEvaluation:
             json={
                 "document_type": "退院時サマリ",
                 "input_text": "患者情報テキスト",
-                "current_prescription": "",
+                "previous_text": "",
                 "additional_info": "",
                 "output_summary": VALID_OUTPUT_SUMMARY,
             },
@@ -88,7 +88,7 @@ class TestSyncEvaluation:
             json={
                 "document_type": "退院時サマリ",
                 "input_text": "患者情報",
-                "current_prescription": "",
+                "previous_text": "",
                 "additional_info": "",
                 "output_summary": "",
             },
@@ -122,7 +122,7 @@ class TestSyncEvaluation:
                 json={
                     "document_type": "現病歴",
                     "input_text": "患者情報テキスト",
-                    "current_prescription": "",
+                    "previous_text": "",
                     "additional_info": "",
                     "output_summary": VALID_OUTPUT_SUMMARY,
                 },
@@ -154,7 +154,7 @@ class TestStreamingEvaluation:
                 json={
                     "document_type": "退院時サマリ",
                     "input_text": "患者情報テキスト",
-                    "current_prescription": "",
+                    "previous_text": "",
                     "additional_info": "",
                     "output_summary": VALID_OUTPUT_SUMMARY,
                 },
@@ -179,7 +179,7 @@ class TestStreamingEvaluation:
             json={
                 "document_type": "退院時サマリ",
                 "input_text": "患者情報",
-                "current_prescription": "",
+                "previous_text": "",
                 "additional_info": "",
                 "output_summary": VALID_OUTPUT_SUMMARY,
             },

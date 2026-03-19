@@ -19,12 +19,7 @@
         }
       ],
       "essential": true,
-      "environment": [
-        {
-          "name": "AWS_DEFAULT_REGION",
-          "value": "ap-northeast-1"
-        }
-      ],
+      "environment": [],
       "mountPoints": [],
       "volumesFrom": [],
       "secrets": [

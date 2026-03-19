@@ -64,7 +64,7 @@ class TestSyncAPIErrors:
                 json={
                     "document_type": "退院時サマリ",
                     "input_text": "患者情報テキスト",
-                    "current_prescription": "",
+                    "previous_text": "",
                     "additional_info": "",
                     "output_summary": _VALID_OUTPUT_SUMMARY,
                 },
@@ -143,7 +143,7 @@ class TestStreamingErrors:
                 json={
                     "document_type": "退院時サマリ",
                     "input_text": "患者情報テキスト",
-                    "current_prescription": "",
+                    "previous_text": "",
                     "additional_info": "",
                     "output_summary": _VALID_OUTPUT_SUMMARY,
                 },

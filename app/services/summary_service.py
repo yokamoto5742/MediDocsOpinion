@@ -45,7 +45,7 @@ def validate_input(medical_text: str) -> tuple[bool, str | None]:
         return False, MESSAGES["VALIDATION"]["INPUT_TOO_LONG"]
 
     # プロンプトインジェクション検出
-    is_valid, error_msg = validate_medical_input(medical_text, settings.max_input_tokens)
+    is_valid, error_msg = validate_medical_input(medical_text)
     if not is_valid:
         return False, error_msg
 

@@ -84,6 +84,11 @@ def integration_client(integration_db, monkeypatch):
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_settings] = lambda: test_settings
 
+    def _validate_medical_input_1arg(text, *_args, **_kwargs):
+        """validate_medical_input を1引数・2引数どちらでも動作するよう統一"""
+        from app.utils.input_sanitizer import validate_medical_input as _orig
+        return _orig(text)
+
     with (
         patch("app.services.summary_service.settings", test_settings),
         patch("app.services.model_selector.settings", test_settings),
@@ -92,6 +97,8 @@ def integration_client(integration_db, monkeypatch):
         patch("app.services.model_selector.get_db_session", override_get_db_session),
         patch("app.services.evaluation_service.get_db_session", override_get_db_session),
         patch("app.services.usage_service.get_settings", return_value=test_settings),
+        patch("app.services.summary_service.validate_medical_input", _validate_medical_input_1arg),
+        patch("app.services.evaluation_service.validate_medical_input", _validate_medical_input_1arg),
     ):
         yield TestClient(app)
 

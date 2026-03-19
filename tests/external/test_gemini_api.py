@@ -425,7 +425,7 @@ class TestGeminiAPIClientIntegration:
         result = client.generate_summary(
             medical_text="患者情報",
             additional_info="追加情報",
-            current_prescription="処方内容",
+            previous_text="処方内容",
             document_type="他院への紹介",
             model_name="gemini-1.5-pro-002",
         )
