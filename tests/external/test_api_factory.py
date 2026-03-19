@@ -74,7 +74,7 @@ class TestCreateClient:
     def test_create_client_invalid_provider_type(self):
         """クライアント作成 - 無効なプロバイダータイプ"""
         with pytest.raises(APIError):
-            create_client(123)
+            create_client("invalid_provider")  # type: ignore
 
 
 class TestGenerateSummaryWithProvider:
@@ -96,7 +96,7 @@ class TestGenerateSummaryWithProvider:
         call_args = mock_generate.call_args[0]
         assert call_args[0] == "患者情報"
         assert call_args[1] == ""  # additional_info
-        assert call_args[2] == ""  # previous_text
+        assert call_args[2] == ""  # current_prescription
 
     @patch.object(GeminiAPIClient, "generate_summary")
     def test_generate_summary_gemini_all_params(self, mock_generate):
@@ -107,7 +107,7 @@ class TestGenerateSummaryWithProvider:
             provider="gemini",
             medical_text="カルテ情報",
             additional_info="追加情報",
-            previous_text="処方内容",
+            current_prescription="処方内容",
             department="眼科",
             document_type="他院への紹介",
             doctor="橋本義弘",
@@ -117,11 +117,11 @@ class TestGenerateSummaryWithProvider:
         assert result == ("生成された文書", 2000, 800)
         mock_generate.assert_called_once()
 
-        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[0] == "カルテ情報"
         assert call_args[1] == "追加情報"
-        assert call_args[2] == "処方内容"  # previous_text
+        assert call_args[2] == "処方内容"
         assert call_args[3] == "眼科"
         assert call_args[4] == "他院への紹介"
         assert call_args[5] == "橋本義弘"
@@ -172,10 +172,10 @@ class TestGenerateSummaryWithProvider:
             medical_text="データ",
         )
 
-        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
-        # DEFAULT_DOCUMENT_TYPE が使用される（constants.py: "主治医意見書"）
-        assert call_args[4] == "主治医意見書"
+        # DEFAULT_DOCUMENT_TYPE が使用される（constants.py: "退院時サマリ"）
+        assert call_args[4] == "退院時サマリ"
 
 
 class TestEdgeCases:
@@ -208,7 +208,7 @@ class TestEdgeCases:
 
         assert result == ("文書", 1000, 500)
 
-        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[1] == ""   # additional_info
         assert call_args[2] == ""   # current_prescription
@@ -222,6 +222,133 @@ class TestEdgeCases:
 
         assert result == ("文書", 1000, 500)
 
-        # generate_summary(medical_text, additional_info, previous_text, department, document_type, doctor, model_name)
+        # generate_summary(medical_text, additional_info, current_prescription, department, document_type, doctor, model_name)
         call_args = mock_generate.call_args[0]
         assert call_args[6] is None  # model_name
+
+
+class TestGenerateSummaryStreamWithProvider:
+    """generate_summary_stream_with_provider 関数のテスト"""
+
+    @patch.object(ClaudeAPIClient, "generate_summary_stream")
+    @patch.object(ClaudeAPIClient, "initialize")
+    def test_stream_with_claude(self, _mock_init, mock_stream):
+        """Claude プロバイダーでストリームジェネレータを返す"""
+        from app.external.api_factory import generate_summary_stream_with_provider
+
+        mock_stream.return_value = iter(["チャンク1", "チャンク2"])
+
+        result = generate_summary_stream_with_provider(
+            provider=APIProvider.CLAUDE,
+            medical_text="カルテ情報",
+            additional_info="追加情報",
+            current_prescription="薬剤A",
+        )
+
+        mock_stream.assert_called_once()
+        chunks = list(result)
+        assert chunks == ["チャンク1", "チャンク2"]
+
+    @patch.object(GeminiAPIClient, "generate_summary_stream")
+    @patch.object(GeminiAPIClient, "initialize")
+    def test_stream_with_gemini(self, _mock_init, mock_stream):
+        """Gemini プロバイダーでストリームジェネレータを返す"""
+        from app.external.api_factory import generate_summary_stream_with_provider
+
+        mock_stream.return_value = iter(["チャンクA", "チャンクB"])
+
+        result = generate_summary_stream_with_provider(
+            provider=APIProvider.GEMINI,
+            medical_text="カルテ情報",
+        )
+
+        mock_stream.assert_called_once()
+        chunks = list(result)
+        assert chunks == ["チャンクA", "チャンクB"]
+
+    @patch.object(ClaudeAPIClient, "generate_summary_stream")
+    @patch.object(ClaudeAPIClient, "initialize")
+    def test_stream_passes_model_name(self, _mock_init, mock_stream):
+        """model_name がクライアントに渡される"""
+        from app.external.api_factory import generate_summary_stream_with_provider
+
+        mock_stream.return_value = iter([])
+
+        generate_summary_stream_with_provider(
+            provider="claude",
+            medical_text="テキスト",
+            model_name="claude-3-5-sonnet",
+        )
+
+        call_args = mock_stream.call_args[0]
+        assert "claude-3-5-sonnet" in call_args
+
+
+class TestCreateClientErrorScenarios:
+    """create_client エラーシナリオのテスト"""
+
+    def test_create_client_invalid_string_raises_api_error(self):
+        """無効なプロバイダー文字列が APIError を発生させること"""
+        with pytest.raises(APIError) as exc_info:
+            create_client("gpt4")
+
+        assert "gpt4" in str(exc_info.value)
+
+    def test_create_client_empty_string_raises_api_error(self):
+        """空文字列が APIError を発生させること"""
+        with pytest.raises(APIError):
+            create_client("")
+
+    def test_create_client_numeric_string_raises_api_error(self):
+        """数値文字列が APIError を発生させること"""
+        with pytest.raises(APIError):
+            create_client("123")
+
+    def test_create_client_returns_independent_instances(self):
+        """複数回呼び出しで独立したインスタンスを返すこと"""
+        client1 = create_client(APIProvider.CLAUDE)
+        client2 = create_client(APIProvider.CLAUDE)
+        assert client1 is not client2
+
+    def test_create_client_openai_raises_api_error(self):
+        """サポート外プロバイダー 'openai' が APIError を発生させること"""
+        with pytest.raises(APIError) as exc_info:
+            create_client("openai")
+
+        assert "openai" in str(exc_info.value)
+
+
+class TestGenerateSummaryWithProviderErrors:
+    """generate_summary_with_provider エラーシナリオのテスト"""
+
+    def test_generate_with_invalid_provider_raises_api_error(self):
+        """無効なプロバイダーで APIError を発生させること"""
+        with pytest.raises(APIError):
+            generate_summary_with_provider(
+                provider="invalid_provider",
+                medical_text="カルテ情報",
+            )
+
+    @patch.object(ClaudeAPIClient, "initialize")
+    @patch.object(ClaudeAPIClient, "generate_summary")
+    def test_generate_propagates_api_error(self, mock_generate, mock_init):
+        """クライアントから APIError が伝播すること"""
+        mock_generate.side_effect = APIError("API呼び出し失敗")
+
+        with pytest.raises(APIError, match="API呼び出し失敗"):
+            generate_summary_with_provider(
+                provider=APIProvider.CLAUDE,
+                medical_text="カルテ情報",
+            )
+
+    @patch.object(GeminiAPIClient, "initialize")
+    @patch.object(GeminiAPIClient, "generate_summary")
+    def test_generate_gemini_propagates_connection_error(self, mock_generate, mock_init):
+        """Gemini クライアントの接続エラーが伝播すること"""
+        mock_generate.side_effect = APIError("Vertex AI接続エラー")
+
+        with pytest.raises(APIError, match="Vertex AI接続エラー"):
+            generate_summary_with_provider(
+                provider=APIProvider.GEMINI,
+                medical_text="カルテ情報",
+            )

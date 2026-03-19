@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 命名：説明的な名前を使用してください。`tmp` 、`data`、`handleStuff`のような一般的な名前は避けてください。例えば、`doCalc`よりも`calculateInvoiceTotal` の方が適しています。
 - DRY原則：コードを重複させないでください。類似のロジックが2箇所に存在する場合は、共有関数にリファクタリングしてください。それぞれに独自の実装が必要な場合はその理由を明確にしてください。
 - コメント:分かりにくいロジックについては説明を加えます。説明不要のコードには過剰なコメントはつけないでください。
-- コメントとdocstringは必要最小限に日本語で記述します。文末に"。"や"."をつけないでください。
+- コメントとdocstringは必要最小限に日本語で記述します。
 - このアプリのUI画面で表示するメッセージはすべて日本語にします。app/core/constants.pyで一元管理します。
 
 ## Overview
@@ -51,7 +51,7 @@ python -m pytest tests/services/test_summary_service.py::test_generate_summary -
 # カバレッジ付きテスト
 python -m pytest tests/ -v --tb=short --cov=app --cov-report=html
 
-# 型チェック（app/のみ、tests/・scripts/は除外）
+# 型チェック
 pyright
 ```
 
@@ -126,7 +126,7 @@ DBから以下の順でプロンプトを解決する：
 - すべての関数に型ヒント（パラメータ・戻り値）を付与
 - インポート順: 標準ライブラリ → サードパーティ → ローカル（各グループ内で`import`が先、`from`は後、アルファベット順）
 - 関数サイズは50行以下を目標
-- コメントは複雑なロジックのみ日本語で記述（文末に句点不要）
+- コメントは複雑なロジックのみ日本語で記述
 
 ## Commit Messages
 

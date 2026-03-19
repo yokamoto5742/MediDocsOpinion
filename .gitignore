@@ -1,18 +1,21 @@
+# --- ビルド・配布用 ---
 build/
 dist/
-logs/
+app/static/dist/
+*.spec
+
+# --- ディレクトリ・依存関係 ---
 .idea/
 .serena/
+frontend/node_modules/
+node_modules/
 
+# --- 環境設定・セキュリティ ---
 .env
 .pem
-.coverage
-*.spec
 *.iml
 
+# --- ログ解析 ---
+.coverage
 error_log.txt
-
-# フロントエンドビルド成果物
-app/static/dist/
-node_modules/
-frontend/node_modules/
+logs/

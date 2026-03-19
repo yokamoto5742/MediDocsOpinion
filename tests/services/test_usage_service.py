@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from app.core.constants import get_message
 from app.services.usage_service import DailyUsageSummary, check_daily_limit, get_daily_usage
 
@@ -124,3 +122,59 @@ class TestCheckDailyLimit:
         result = check_daily_limit()
 
         assert result is None
+
+
+class TestSaveUsage:
+    """save_usage 関数のテスト（usage_service 直接）"""
+
+    @patch("app.services.usage_service.get_db_session")
+    def test_save_usage_success(self, mock_get_db_session):
+        """正常系: DBにレコードが追加される"""
+        from app.services.usage_service import save_usage
+
+        mock_db = MagicMock()
+        mock_get_db_session.return_value.__enter__.return_value = mock_db
+
+        save_usage(
+            department="眼科",
+            doctor="橋本義弘",
+            document_type="他院への紹介",
+            model="Claude",
+            input_tokens=1000,
+            output_tokens=500,
+            processing_time=2.5,
+        )
+
+        mock_db.add.assert_called_once()
+        added = mock_db.add.call_args[0][0]
+        assert added.department == "眼科"
+        assert added.doctor == "橋本義弘"
+        assert added.document_type == "他院への紹介"
+        assert added.model == "Claude"
+        assert added.input_tokens == 1000
+        assert added.output_tokens == 500
+        assert added.processing_time == 2.5
+        assert added.app_type == "dischargesummary"
+
+    @patch("app.services.usage_service.get_db_session")
+    @patch("logging.error")
+    def test_save_usage_exception_silent(self, mock_logging_error, mock_get_db_session):
+        """例外発生時: エラーログを出力するが例外は外部に伝播しない"""
+        from app.services.usage_service import save_usage
+
+        mock_db = MagicMock()
+        mock_db.add.side_effect = Exception("DB書き込みエラー")
+        mock_get_db_session.return_value.__enter__.return_value = mock_db
+
+        # 例外が伝播しないことを確認
+        save_usage(
+            department="default",
+            doctor="default",
+            document_type="返書",
+            model="Gemini_Pro",
+            input_tokens=2000,
+            output_tokens=800,
+            processing_time=3.0,
+        )
+
+        mock_logging_error.assert_called_once()

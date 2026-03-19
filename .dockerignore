@@ -1,23 +1,30 @@
+# --- 設定ファイル ---
+.claude
 .env
 .env.*
 .git
 .gitignore
 .idea
-.claude
-__pycache__
+pyproject.toml
+requirements-dev.lock
+
+# --- ビルド・実行 ---
+*.log
 *.pyc
 *.pyo
-tests/
-node_modules/
-frontend/node_modules/
-app/static/dist/
-logs/
-*.log
 .coverage
-htmlcov/
-requirements-dev.lock
-pyproject.toml
-.venv/
+__pycache__
 alembic/versions/__pycache__/
-scripts/
+htmlcov/
+logs/
+
+# --- 依存関係 ---
+.venv/
+frontend/node_modules/
+node_modules/
+
+# --- ディレクトリ・静的ファイル ---
+app/static/dist/
 docs/
+scripts/
+tests/

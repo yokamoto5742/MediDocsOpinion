@@ -1,10 +1,11 @@
 {
   "medidocsTaskRole": {
-    "Description": "ECS Task Role - Bedrock Invoke permissions only",
+    "Description": "Allows ECS tasks to call AWS services on your behalf.",
     "AssumeRolePolicyDocument": {
       "Version": "2012-10-17",
       "Statement": [
         {
+          "Sid": "",
           "Effect": "Allow",
           "Principal": {
             "Service": "ecs-tasks.amazonaws.com"
@@ -33,11 +34,12 @@
     }
   },
   "ecsTaskExecutionRole": {
-    "Description": "ECS Task Execution Role - ECR pull, Secrets Manager read, CloudWatch Logs write",
+    "Description": "Allows ECS tasks to call AWS services on your behalf.",
     "AssumeRolePolicyDocument": {
       "Version": "2012-10-17",
       "Statement": [
         {
+          "Sid": "",
           "Effect": "Allow",
           "Principal": {
             "Service": "ecs-tasks.amazonaws.com"
@@ -54,10 +56,11 @@
       "Statement": [
         {
           "Effect": "Allow",
-          "Action": [
-            "secretsmanager:GetSecretValue"
-          ],
-          "Resource": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/*"
+          "Action": "secretsmanager:GetSecretValue",
+          "Resource": [
+            "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:medidocs/*",
+            "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:rds!db-7e7da41d-bf28-4e97-b9e6-ee14852bce56-oPxIiP"
+          ]
         }
       ]
     }

@@ -168,3 +168,55 @@ class TestGetSecretKey:
 
         key = get_secret_key(mock_settings)
         assert key == b"required-secret-key"
+
+
+class TestSecurityHeadersMiddleware:
+    """SecurityHeadersMiddleware のテスト"""
+
+    def _make_response(self, url: str = "http://testserver/"):
+        """TestClient 経由でレスポンスヘッダーを取得するヘルパー"""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from app.core.security import SecurityHeadersMiddleware
+
+        mini_app = FastAPI()
+        mini_app.add_middleware(SecurityHeadersMiddleware)
+
+        @mini_app.get("/")
+        def _root():
+            return {"ok": True}
+
+        with TestClient(mini_app, base_url=url) as c:
+            return c.get("/").headers
+
+    def test_x_content_type_options(self):
+        """X-Content-Type-Options: nosniff が設定される"""
+        headers = self._make_response()
+        assert headers.get("x-content-type-options") == "nosniff"
+
+    def test_x_frame_options(self):
+        """X-Frame-Options: DENY が設定される"""
+        headers = self._make_response()
+        assert headers.get("x-frame-options") == "DENY"
+
+    def test_x_xss_protection(self):
+        """X-XSS-Protection が設定される"""
+        headers = self._make_response()
+        assert headers.get("x-xss-protection") == "1; mode=block"
+
+    def test_no_hsts_on_http(self):
+        """HTTP アクセス時は HSTS ヘッダーが付かない"""
+        headers = self._make_response()
+        assert "strict-transport-security" not in headers
+
+    def test_csp_header_present(self):
+        """Content-Security-Policy ヘッダーが存在する"""
+        headers = self._make_response()
+        csp = headers.get("content-security-policy", "")
+        assert "default-src 'self'" in csp
+
+    def test_csp_frame_ancestors_none(self):
+        """CSP に frame-ancestors 'none' が含まれる"""
+        headers = self._make_response()
+        csp = headers.get("content-security-policy", "")
+        assert "frame-ancestors 'none'" in csp

@@ -8,7 +8,7 @@ export interface Settings {
 
 // フォームデータ
 export interface FormData {
-    previousText: string;
+    currentPrescription: string;
     medicalText: string;
     additionalInfo: string;
 }
@@ -55,11 +55,6 @@ export interface SelectedModelResponse {
 }
 
 // SSEイベント型
-export interface SSEProgressEvent {
-    status: string;
-    message: string;
-}
-
 export interface SSECompleteEvent {
     success: boolean;
     output_summary: string;
@@ -82,22 +77,4 @@ export interface SSEEvaluationCompleteEvent {
     input_tokens: number;
     output_tokens: number;
     processing_time: number;
-}
-
-// メッセージ定数の型定義
-export interface MessagesMap {
-    ERROR: Record<string, string>;
-    VALIDATION: Record<string, string>;
-    SUCCESS: Record<string, string>;
-    INFO: Record<string, string>;
-    CONFIRM: Record<string, string>;
-}
-
-// グローバル変数の型宣言
-declare global {
-    interface Window {
-        CSRF_TOKEN?: string;
-        TAB_NAMES?: readonly string[];
-        MESSAGES?: MessagesMap;
-    }
 }

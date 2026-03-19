@@ -1,5 +1,5 @@
-# Stage 1: フロントエンドビルド（公式Node.jsイメージを使用）
-FROM node:20-slim AS frontend-builder
+# Stage 1: フロントエンドビルド
+FROM node:22-slim AS frontend-builder
 
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
@@ -14,10 +14,10 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# uvバージョンを固定
-COPY --from=ghcr.io/astral-sh/uv:0.9.6 /uv /uvx /bin/
+# uvの最新バージョン
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 本番依存のみインストール（ハッシュ検証付き）
+# 本番依存のみインストール
 COPY requirements.lock .
 RUN uv pip install --no-cache-dir --system --require-hashes -r requirements.lock
 

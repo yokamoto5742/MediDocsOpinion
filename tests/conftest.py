@@ -21,6 +21,16 @@ from app.models.base import Base
 from app.models.prompt import Prompt
 from app.models.usage import SummaryUsage
 
+# テスト共通の医療テキスト（実際の入力に近いサンプル）
+VALID_MEDICAL_TEXT = (
+    "患者は60歳男性。主訴は胸痛。"
+    "既往歴：高血圧、糖尿病。"
+    "現病歴：3日前から安静時にも胸痛あり。"
+    "身体所見：血圧150/90mmHg、脈拍80回/分。"
+    "検査：心電図でST上昇あり。トロポニンT陽性。"
+    "診断：急性心筋梗塞。治療：PCI施行。経過良好にて退院。"
+) * 5
+
 
 @pytest.fixture(scope="function", autouse=True)
 def override_settings(monkeypatch):
@@ -48,8 +58,8 @@ def test_db():
     Base.metadata.create_all(bind=engine)
 
     def override_get_db():
+        db = TestingSessionLocal()
         try:
-            db = TestingSessionLocal()
             yield db
         finally:
             db.close()
@@ -60,7 +70,7 @@ def test_db():
 
     Base.metadata.drop_all(bind=engine)
     # get_settingsのオーバーライドは維持（autouse fixtureで管理）
-    db_override = app.dependency_overrides.pop(get_db, None)
+    app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.fixture
@@ -127,9 +137,8 @@ def sample_usage_records(test_db):
 
 
 @pytest.fixture
-def csrf_headers(monkeypatch):
-    """CSRFトークン付きヘッダーを生成"""
-    monkeypatch.setenv("CSRF_SECRET_KEY", "test-csrf-secret-key")
+def csrf_headers():
+    """CSRFトークン付きヘッダーを生成（override_settings が先に CSRF_SECRET_KEY を設定済み）"""
     settings = Settings()
     token = generate_csrf_token(settings)
     return {"X-CSRF-Token": token}

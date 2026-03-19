@@ -19,7 +19,7 @@ class MockAPIClient(BaseAPIClient):
         self.initialized = True
         return True
 
-    def _generate_content(self, prompt: str, model_name: str) -> tuple:
+    def _generate_content(self, _prompt: str, _model_name: str) -> tuple:  # type: ignore[override]
         """コンテンツ生成をシミュレート"""
         return "生成されたテキスト", 1000, 500
 
@@ -73,7 +73,7 @@ class TestCreateSummaryPrompt:
         prompt = client.create_summary_prompt(
             medical_text="カルテデータ",
             additional_info="追加情報",
-            previous_text="処方内容",
+            current_prescription="処方内容",
             department="眼科",
             document_type="他院への紹介",
             doctor="橋本義弘",
@@ -81,7 +81,7 @@ class TestCreateSummaryPrompt:
 
         assert "【カルテ情報】" in prompt
         assert "カルテデータ" in prompt
-        assert "【前回の記載】" in prompt
+        assert "【退院時処方(現在の処方)】" in prompt
         assert "処方内容" in prompt
         assert "【追加情報】追加情報" in prompt
 
@@ -100,7 +100,7 @@ class TestCreateSummaryPrompt:
 
         assert "【カルテ情報】" in prompt
         assert "データ" in prompt
-        assert "【前回の記載】\n処方" not in prompt
+        assert "【退院時処方(現在の処方)】\n処方" not in prompt
         # 追加情報は空でも含まれる
         assert "【追加情報】" in prompt
 
@@ -118,11 +118,11 @@ class TestCreateSummaryPrompt:
         prompt = client.create_summary_prompt(
             medical_text="データ",
             additional_info="   ",
-            previous_text="\t",
+            current_prescription="\t",
         )
 
         # 空白のみは strip() で空文字列になるため、ユーザーデータは追加されない
-        assert "【前回の記載】\n\t" not in prompt
+        assert "【退院時処方(現在の処方)】\n\t" not in prompt
 
     @patch("app.external.base_api.get_prompt")
     @patch("app.external.base_api.get_db_session")
@@ -292,7 +292,7 @@ class TestGenerateSummary:
 
         client = MockAPIClient()
         result = client.generate_summary(medical_text="患者情報", additional_info="追加情報",
-                                         previous_text="処方",
+                                         current_prescription="処方",
                                          document_type="他院への紹介")
 
         assert result == ("生成されたテキスト", 1000, 500)
@@ -358,7 +358,7 @@ class TestGenerateSummary:
         """文書生成 - コンテンツ生成失敗"""
 
         class FailingGenerateClient(MockAPIClient):
-            def _generate_content(self, prompt: str, model_name: str) -> tuple:
+            def _generate_content(self, _prompt: str, _model_name: str) -> tuple:
                 raise Exception("生成エラー")
 
         mock_db = MagicMock()
@@ -381,7 +381,7 @@ class TestGenerateSummary:
         """文書生成 - APIError の伝播"""
 
         class APIErrorClient(MockAPIClient):
-            def _generate_content(self, prompt: str, model_name: str) -> tuple:
+            def _generate_content(self, _prompt: str, _model_name: str) -> tuple:
                 raise APIError("API呼び出しエラー")
 
         mock_db = MagicMock()
@@ -417,17 +417,17 @@ class TestBaseAPIClientAbstractMethods:
     def test_cannot_instantiate_base_class(self):
         """BaseAPIClient を直接インスタンス化できない"""
         with pytest.raises(TypeError):
-            BaseAPIClient(api_key="test", default_model="test")
+            BaseAPIClient(api_key="test", default_model="test")  # type: ignore
 
     def test_subclass_must_implement_initialize(self):
         """サブクラスは initialize を実装する必要がある"""
 
         class IncompleteClient(BaseAPIClient):
-            def _generate_content(self, prompt: str, model_name: str) -> tuple:
+            def _generate_content(self, _prompt: str, _model_name: str) -> tuple:  # type: ignore[override]
                 return "text", 100, 50
 
         with pytest.raises(TypeError):
-            IncompleteClient(api_key="test", default_model="test")
+            IncompleteClient(api_key="test", default_model="test")  # type: ignore
 
     def test_subclass_must_implement_generate_content(self):
         """サブクラスは _generate_content を実装する必要がある"""
@@ -437,7 +437,7 @@ class TestBaseAPIClientAbstractMethods:
                 return True
 
         with pytest.raises(TypeError):
-            IncompleteClient(api_key="test", default_model="test")
+            IncompleteClient(api_key="test", default_model="test")  # type: ignore
 
 
 class TestBaseAPIClientEdgeCases:

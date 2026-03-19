@@ -19,13 +19,14 @@ class TestGetEvaluationPrompt:
         mock_prompt.document_type = "他院への紹介"
         mock_prompt.content = "評価プロンプト内容"
         mock_prompt.is_active = True
+        mock_prompt.document_type = "他院への紹介"
 
         mock_db.query.return_value.filter.return_value.first.return_value = mock_prompt
 
         result = get_evaluation_prompt(mock_db, "他院への紹介")
 
         assert result is mock_prompt
-        assert result.document_type == "他院への紹介"
+        assert result is not None and result.document_type == "他院への紹介"
 
     def test_get_evaluation_prompt_not_exists(self):
         """評価プロンプト取得 - 存在しない場合"""

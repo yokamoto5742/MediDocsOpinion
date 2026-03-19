@@ -24,6 +24,8 @@ def get_daily_usage() -> DailyUsageSummary:
         ).filter(
             SummaryUsage.date >= today_start,
         ).first()
+    if result is None:
+        return DailyUsageSummary(request_count=0, total_input_tokens=0, total_output_tokens=0)
     return DailyUsageSummary(
         request_count=result[0],
         total_input_tokens=result[1],

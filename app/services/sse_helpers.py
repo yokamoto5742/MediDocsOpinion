@@ -63,3 +63,16 @@ async def stream_with_heartbeat(
                 "status": running_status,
                 "message": elapsed_message_template.format(elapsed=elapsed),
             })
+
+    # タスクがwhileループ前に完了した場合、キューの結果を処理する
+    try:
+        msg_type, msg_data = queue.get_nowait()
+        if msg_type == "error":
+            yield sse_event("error", {
+                "success": False,
+                "error_message": msg_data,
+            })
+            return
+        yield msg_data
+    except asyncio.QueueEmpty:
+        pass
