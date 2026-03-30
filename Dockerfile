@@ -11,22 +11,18 @@ RUN npm run build
 
 # Stage 2: Python本番イメージ
 FROM python:3.13-slim
-
 WORKDIR /app
 
-# uvの最新バージョン
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# 本番依存のみインストール
-COPY requirements.lock .
-RUN uv pip install --no-cache-dir --system --require-hashes -r requirements.lock
-
-# フロントエンドビルド成果物をコピー
-COPY --from=frontend-builder /app/app/static/dist app/static/dist
-
+COPY pyproject.toml uv.lock ./
 COPY app/ app/
 COPY alembic/ alembic/
 COPY alembic.ini .
+COPY --from=frontend-builder /app/app/static/dist app/static/dist
+
+ENV UV_PROJECT_ENVIRONMENT="/usr/local"
+RUN uv sync --frozen --no-dev --no-install-project
 
 EXPOSE 8000
 

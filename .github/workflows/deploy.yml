@@ -42,16 +42,14 @@ jobs:
       - name: コードをチェックアウト
         uses: actions/checkout@v4
 
-      - name: Python をセットアップ
-        uses: actions/setup-python@v5
+      - name: uv をセットアップ
+        uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: "3.13"
-          cache: "pip"
 
       - name: 依存関係をインストール
-        run: |
-          pip install uv
-          uv pip install --system -r requirements-dev.lock
+        run: uv sync --frozen
 
       - name: テストを実行
         env:
@@ -59,7 +57,7 @@ jobs:
           AWS_REGION: ap-northeast-1
           ANTHROPIC_MODEL: jp.anthropic.claude-haiku-4-5-20251001-v1:0
           CSRF_SECRET_KEY: test-secret-key
-        run: python -m pytest tests/ -v --tb=short
+        run: uv run pytest tests/ -v --tb=short
 
   deploy:
     name: ECRビルド & ECSデプロイ

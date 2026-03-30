@@ -5,8 +5,6 @@
 .git
 .gitignore
 .idea
-pyproject.toml
-requirements-dev.lock
 
 # --- ビルド・実行 ---
 *.log
