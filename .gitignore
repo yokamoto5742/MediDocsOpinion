@@ -6,9 +6,15 @@ app/static/dist/
 
 # --- ディレクトリ・依存関係 ---
 .idea/
-.serena/
 frontend/node_modules/
 node_modules/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
 
 # --- 環境設定・セキュリティ ---
 .env
