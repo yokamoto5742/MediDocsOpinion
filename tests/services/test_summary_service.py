@@ -12,7 +12,9 @@ from app.services.usage_service import save_usage
 class TestValidateInput:
     """validate_input 関数のテスト"""
 
-    @patch("app.services.summary_service.validate_medical_input", return_value=(True, None))
+    @patch(
+        "app.services.summary_service.validate_medical_input", return_value=(True, None)
+    )
     def test_validate_input_valid(self, _mock_validate):
         """入力検証 - 正常系"""
         is_valid, error = validate_input("これは有効なカルテ情報です" * 10)
@@ -57,7 +59,9 @@ class TestValidateInput:
         assert is_valid is False
         assert error == MESSAGES["VALIDATION"]["INPUT_TOO_LONG"]
 
-    @patch("app.services.summary_service.validate_medical_input", return_value=(True, None))
+    @patch(
+        "app.services.summary_service.validate_medical_input", return_value=(True, None)
+    )
     @patch("app.services.summary_service.settings")
     def test_validate_input_exactly_min_length(self, mock_settings, _mock_validate):
         """入力検証 - ちょうど最小文字数は有効"""
@@ -68,8 +72,10 @@ class TestValidateInput:
         assert is_valid is True
         assert error is None
 
-    @patch("app.services.summary_service.validate_medical_input",
-           return_value=(False, "入力テキストに不正なパターンが検出されました"))
+    @patch(
+        "app.services.summary_service.validate_medical_input",
+        return_value=(False, "入力テキストに不正なパターンが検出されました"),
+    )
     @patch("app.services.summary_service.settings")
     def test_validate_input_prompt_injection(self, mock_settings, _mock_validate):
         """入力検証 - プロンプトインジェクションを検出"""
@@ -158,13 +164,23 @@ class TestDetermineModel:
         assert switched is False
 
     @patch("app.services.model_selector.settings")
-    def test_determine_model_no_explicit_selection_db_error_falls_back(self, mock_settings):
+    def test_determine_model_no_explicit_selection_db_error_falls_back(
+        self, mock_settings
+    ):
         """モデル決定 - model_explicitly_selected=False でDB取得失敗時はrequested_modelを使用"""
         mock_settings.max_token_threshold = 40000
 
-        with patch("app.services.model_selector.get_db_session", side_effect=Exception("DB error")):
-            model, switched = determine_model(requested_model="Claude", input_length=10000, department="内科",
-                                              document_type="退院時サマリ", doctor="default")
+        with patch(
+            "app.services.model_selector.get_db_session",
+            side_effect=Exception("DB error"),
+        ):
+            model, switched = determine_model(
+                requested_model="Claude",
+                input_length=10000,
+                department="内科",
+                document_type="退院時サマリ",
+                doctor="default",
+            )
 
         assert model == "Claude"
         assert switched is False
@@ -172,7 +188,9 @@ class TestDetermineModel:
     @patch("app.services.prompt_service.get_prompt")
     @patch("app.core.database.get_db_session")
     @patch("app.services.model_selector.settings")
-    def test_determine_model_from_prompt(self, mock_settings, mock_db_session, mock_get_prompt):
+    def test_determine_model_from_prompt(
+        self, mock_settings, mock_db_session, mock_get_prompt
+    ):
         """モデル決定 - プロンプトから取得"""
         from unittest.mock import MagicMock
 
@@ -187,8 +205,13 @@ class TestDetermineModel:
         mock_prompt.selected_model = "Gemini"
         mock_get_prompt.return_value = mock_prompt
 
-        model, switched = determine_model(requested_model="Claude", input_length=10000, department="眼科",
-                                          document_type="他院への紹介", doctor="橋本義弘")
+        model, switched = determine_model(
+            requested_model="Claude",
+            input_length=10000,
+            department="眼科",
+            document_type="他院への紹介",
+            doctor="橋本義弘",
+        )
 
         # プロンプトで設定されたモデルが使用される
         assert model == "Gemini"
@@ -201,8 +224,7 @@ class TestGetProviderAndModel:
     @patch("app.services.model_selector.settings")
     def test_get_provider_and_model_claude(self, mock_settings):
         """プロバイダーとモデル取得 - Claude"""
-        mock_settings.claude_model = "claude-3-5-sonnet-20241022"
-        mock_settings.anthropic_model = None
+        mock_settings.anthropic_model = "claude-3-5-sonnet-20241022"
 
         provider, model = get_provider_and_model("Claude")
 
@@ -210,9 +232,8 @@ class TestGetProviderAndModel:
         assert model == "claude-3-5-sonnet-20241022"
 
     @patch("app.services.model_selector.settings")
-    def test_get_provider_and_model_claude_anthropic_fallback(self, mock_settings):
-        """プロバイダーとモデル取得 - Claude（anthropic_modelフォールバック）"""
-        mock_settings.claude_model = None
+    def test_get_provider_and_model_claude_anthropic_model(self, mock_settings):
+        """プロバイダーとモデル取得 - Claude（anthropic_model使用）"""
         mock_settings.anthropic_model = "claude-3-opus-20240229"
 
         provider, model = get_provider_and_model("Claude")
@@ -239,8 +260,7 @@ class TestGetProviderAndModel:
 
     @patch("app.services.model_selector.settings")
     def test_get_provider_and_model_claude_model_not_set(self, mock_settings):
-        """プロバイダーとモデル取得 - Claude設定が両方ともNone"""
-        mock_settings.claude_model = None
+        """プロバイダーとモデル取得 - anthropic_modelがNone"""
         mock_settings.anthropic_model = None
 
         with pytest.raises(ValueError):
@@ -318,13 +338,31 @@ class TestExecuteSummaryGeneration:
     BASE_PATCHES = [
         ("app.services.summary_service.log_audit_event", {}),
         ("app.services.summary_service.check_daily_limit", {"return_value": None}),
-        ("app.services.summary_service.sanitize_medical_text", {"side_effect": lambda x: x}),
+        (
+            "app.services.summary_service.sanitize_medical_text",
+            {"side_effect": lambda x: x},
+        ),
         ("app.services.summary_service.validate_input", {"return_value": (True, None)}),
-        ("app.services.summary_service.determine_model", {"return_value": ("Claude", False)}),
-        ("app.services.summary_service.get_provider_and_model", {"return_value": ("claude", "claude-3-5")}),
-        ("app.services.summary_service.generate_summary_with_provider", {"return_value": ("出力テキスト", 100, 50)}),
-        ("app.services.summary_service.format_output_summary", {"return_value": "整形済み出力"}),
-        ("app.services.summary_service.parse_output_summary", {"return_value": {"section": "内容"}}),
+        (
+            "app.services.summary_service.determine_model",
+            {"return_value": ("Claude", False)},
+        ),
+        (
+            "app.services.summary_service.get_provider_and_model",
+            {"return_value": ("claude", "claude-3-5")},
+        ),
+        (
+            "app.services.summary_service.generate_summary_with_provider",
+            {"return_value": ("出力テキスト", 100, 50)},
+        ),
+        (
+            "app.services.summary_service.format_output_summary",
+            {"return_value": "整形済み出力"},
+        ),
+        (
+            "app.services.summary_service.parse_output_summary",
+            {"return_value": {"section": "内容"}},
+        ),
         ("app.services.summary_service.save_usage", {}),
     ]
 
@@ -364,8 +402,13 @@ class TestExecuteSummaryGeneration:
         """日次制限超過: success=False でエラーメッセージが返る"""
         from app.services.summary_service import execute_summary_generation
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value="日次制限を超えました"):
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch(
+                "app.services.summary_service.check_daily_limit",
+                return_value="日次制限を超えました",
+            ),
+        ):
             result = execute_summary_generation(
                 medical_text="テキスト",
                 additional_info="",
@@ -383,10 +426,18 @@ class TestExecuteSummaryGeneration:
         """入力バリデーション失敗: success=False でエラーメッセージが返る"""
         from app.services.summary_service import execute_summary_generation
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(False, "入力が短すぎます")):
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input",
+                return_value=(False, "入力が短すぎます"),
+            ),
+        ):
             result = execute_summary_generation(
                 medical_text="短い",
                 additional_info="",
@@ -404,11 +455,21 @@ class TestExecuteSummaryGeneration:
         """determine_model が ValueError: success=False で返る"""
         from app.services.summary_service import execute_summary_generation
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(True, None)), \
-             patch("app.services.summary_service.determine_model", side_effect=ValueError("Gemini未設定")):
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input", return_value=(True, None)
+            ),
+            patch(
+                "app.services.summary_service.determine_model",
+                side_effect=ValueError("Gemini未設定"),
+            ),
+        ):
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
@@ -427,12 +488,25 @@ class TestExecuteSummaryGeneration:
         """get_provider_and_model が ValueError: success=False で返る"""
         from app.services.summary_service import execute_summary_generation
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(True, None)), \
-             patch("app.services.summary_service.determine_model", return_value=("Claude", False)), \
-             patch("app.services.summary_service.get_provider_and_model", side_effect=ValueError("モデル未設定")):
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input", return_value=(True, None)
+            ),
+            patch(
+                "app.services.summary_service.determine_model",
+                return_value=("Claude", False),
+            ),
+            patch(
+                "app.services.summary_service.get_provider_and_model",
+                side_effect=ValueError("モデル未設定"),
+            ),
+        ):
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
@@ -451,13 +525,29 @@ class TestExecuteSummaryGeneration:
         """generate_summary_with_provider が例外: success=False で返る"""
         from app.services.summary_service import execute_summary_generation
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(True, None)), \
-             patch("app.services.summary_service.determine_model", return_value=("Claude", False)), \
-             patch("app.services.summary_service.get_provider_and_model", return_value=("claude", "claude-3-5")), \
-             patch("app.services.summary_service.generate_summary_with_provider", side_effect=Exception("API接続エラー")):
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input", return_value=(True, None)
+            ),
+            patch(
+                "app.services.summary_service.determine_model",
+                return_value=("Claude", False),
+            ),
+            patch(
+                "app.services.summary_service.get_provider_and_model",
+                return_value=("claude", "claude-3-5"),
+            ),
+            patch(
+                "app.services.summary_service.generate_summary_with_provider",
+                side_effect=Exception("API接続エラー"),
+            ),
+        ):
             result = execute_summary_generation(
                 medical_text="カルテ情報" * 20,
                 additional_info="",
@@ -488,41 +578,58 @@ class TestExecuteSummaryGenerationStream:
         import json
         from app.services.summary_service import execute_summary_generation_stream
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value="日次制限エラー"):
-            events = await self._collect(execute_summary_generation_stream(
-                medical_text="テキスト",
-                additional_info="",
-                previous_text="",
-                department="default",
-                doctor="default",
-                document_type="返書",
-                model="Claude",
-            ))
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch(
+                "app.services.summary_service.check_daily_limit",
+                return_value="日次制限エラー",
+            ),
+        ):
+            events = await self._collect(
+                execute_summary_generation_stream(
+                    medical_text="テキスト",
+                    additional_info="",
+                    previous_text="",
+                    department="default",
+                    doctor="default",
+                    document_type="返書",
+                    model="Claude",
+                )
+            )
 
         assert len(events) == 1
         assert "event: error" in events[0]
         data_line = [l for l in events[0].splitlines() if l.startswith("data:")][0]
-        payload = json.loads(data_line[len("data:"):].strip())
+        payload = json.loads(data_line[len("data:") :].strip())
         assert payload["success"] is False
 
     async def test_validation_error_yields_sse_error(self):
         """入力バリデーション失敗: SSE error イベントを yield して終了"""
         from app.services.summary_service import execute_summary_generation_stream
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(False, "入力が短すぎます")):
-            events = await self._collect(execute_summary_generation_stream(
-                medical_text="短い",
-                additional_info="",
-                previous_text="",
-                department="default",
-                doctor="default",
-                document_type="返書",
-                model="Claude",
-            ))
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input",
+                return_value=(False, "入力が短すぎます"),
+            ),
+        ):
+            events = await self._collect(
+                execute_summary_generation_stream(
+                    medical_text="短い",
+                    additional_info="",
+                    previous_text="",
+                    department="default",
+                    doctor="default",
+                    document_type="返書",
+                    model="Claude",
+                )
+            )
 
         assert len(events) == 1
         assert "event: error" in events[0]
@@ -531,20 +638,32 @@ class TestExecuteSummaryGenerationStream:
         """determine_model が ValueError: SSE error イベントを yield して終了"""
         from app.services.summary_service import execute_summary_generation_stream
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(True, None)), \
-             patch("app.services.summary_service.determine_model", side_effect=ValueError("Gemini未設定")):
-            events = await self._collect(execute_summary_generation_stream(
-                medical_text="カルテ情報" * 20,
-                additional_info="",
-                previous_text="",
-                department="default",
-                doctor="default",
-                document_type="返書",
-                model="Claude",
-            ))
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input", return_value=(True, None)
+            ),
+            patch(
+                "app.services.summary_service.determine_model",
+                side_effect=ValueError("Gemini未設定"),
+            ),
+        ):
+            events = await self._collect(
+                execute_summary_generation_stream(
+                    medical_text="カルテ情報" * 20,
+                    additional_info="",
+                    previous_text="",
+                    department="default",
+                    doctor="default",
+                    document_type="返書",
+                    model="Claude",
+                )
+            )
 
         assert any("event: error" in e for e in events)
 
@@ -557,30 +676,53 @@ class TestExecuteSummaryGenerationStream:
 
         from app.services.summary_service import execute_summary_generation_stream
 
-        with patch("app.services.summary_service.log_audit_event"), \
-             patch("app.services.summary_service.check_daily_limit", return_value=None), \
-             patch("app.services.summary_service.sanitize_medical_text", side_effect=lambda x: x), \
-             patch("app.services.summary_service.validate_input", return_value=(True, None)), \
-             patch("app.services.summary_service.determine_model", return_value=("Claude", False)), \
-             patch("app.services.summary_service.get_provider_and_model", return_value=("claude", "claude-3-5")), \
-             patch("app.services.summary_service.stream_with_heartbeat", mock_stream_with_heartbeat), \
-             patch("app.services.summary_service.format_output_summary", return_value="整形済み"), \
-             patch("app.services.summary_service.parse_output_summary", return_value={}), \
-             patch("app.services.summary_service.save_usage"):
-            events = await self._collect(execute_summary_generation_stream(
-                medical_text="カルテ情報" * 20,
-                additional_info="",
-                previous_text="",
-                department="眼科",
-                doctor="橋本義弘",
-                document_type="他院への紹介",
-                model="Claude",
-            ))
+        with (
+            patch("app.services.summary_service.log_audit_event"),
+            patch("app.services.summary_service.check_daily_limit", return_value=None),
+            patch(
+                "app.services.summary_service.sanitize_medical_text",
+                side_effect=lambda x: x,
+            ),
+            patch(
+                "app.services.summary_service.validate_input", return_value=(True, None)
+            ),
+            patch(
+                "app.services.summary_service.determine_model",
+                return_value=("Claude", False),
+            ),
+            patch(
+                "app.services.summary_service.get_provider_and_model",
+                return_value=("claude", "claude-3-5"),
+            ),
+            patch(
+                "app.services.summary_service.stream_with_heartbeat",
+                mock_stream_with_heartbeat,
+            ),
+            patch(
+                "app.services.summary_service.format_output_summary",
+                return_value="整形済み",
+            ),
+            patch("app.services.summary_service.parse_output_summary", return_value={}),
+            patch("app.services.summary_service.save_usage"),
+        ):
+            events = await self._collect(
+                execute_summary_generation_stream(
+                    medical_text="カルテ情報" * 20,
+                    additional_info="",
+                    previous_text="",
+                    department="眼科",
+                    doctor="橋本義弘",
+                    document_type="他院への紹介",
+                    model="Claude",
+                )
+            )
 
         complete_events = [e for e in events if "event: complete" in e]
         assert len(complete_events) == 1
-        data_line = [l for l in complete_events[0].splitlines() if l.startswith("data:")][0]
-        payload = json.loads(data_line[len("data:"):].strip())
+        data_line = [
+            l for l in complete_events[0].splitlines() if l.startswith("data:")
+        ][0]
+        payload = json.loads(data_line[len("data:") :].strip())
         assert payload["success"] is True
         assert payload["output_summary"] == "整形済み"
         assert payload["model_used"] == "Claude"

@@ -34,7 +34,6 @@ class Settings(BaseSettings):
     aws_secret_access_key: str | None = None
     aws_region: str = "ap-northeast-1"
     anthropic_model: str | None = None
-    claude_model: str | None = None
 
     # Google Vertex AI (Gemini)
     google_credentials_json: str | None = None

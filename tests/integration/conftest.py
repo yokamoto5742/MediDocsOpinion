@@ -21,7 +21,7 @@ def make_test_settings(**overrides) -> Settings:
     """統合テスト用設定を生成（オーバーライド可能なデフォルト値付き）"""
     return Settings(
         csrf_secret_key=INTEGRATION_CSRF_SECRET,
-        claude_model="claude-test-model",
+        anthropic_model="claude-test-model",
         gemini_model="gemini-test-model",
         evaluation_model="Gemini",
         min_input_tokens=overrides.get("min_input_tokens", 10),

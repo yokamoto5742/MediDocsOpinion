@@ -12,7 +12,7 @@ def determine_model(
     department: str,
     document_type: str,
     doctor: str,
-    model_explicitly_selected: bool = False
+    model_explicitly_selected: bool = False,
 ) -> tuple[str, bool]:
     """モデル自動切替判定"""
     if not model_explicitly_selected:
@@ -28,7 +28,10 @@ def determine_model(
             pass
 
     # 入力長による自動切替
-    if input_length > settings.max_token_threshold and requested_model == ModelType.CLAUDE:
+    if (
+        input_length > settings.max_token_threshold
+        and requested_model == ModelType.CLAUDE
+    ):
         if settings.gemini_model:
             return ModelType.GEMINI_PRO, True
         else:
@@ -40,7 +43,7 @@ def determine_model(
 def get_provider_and_model(selected_model: str) -> tuple[str, str]:
     """モデル名からプロバイダーとモデル名を取得"""
     if selected_model == ModelType.CLAUDE:
-        model = settings.claude_model or settings.anthropic_model
+        model = settings.anthropic_model
         if not model:
             raise ValueError(MESSAGES["CONFIG"]["CLAUDE_MODEL_NOT_SET"])
         return APIProvider.CLAUDE.value, model
