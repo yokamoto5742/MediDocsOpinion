@@ -65,11 +65,11 @@ def test_create_or_update_prompt_update(test_db, sample_prompts):
         document_type="他院への紹介",
         doctor="橋本義弘",
         content="更新されたプロンプト",
-        selected_model="Gemini_Pro",
+        selected_model="Gemini",
     )
     assert prompt.id == original_id
     assert prompt.content == "更新されたプロンプト"
-    assert prompt.selected_model == "Gemini_Pro"
+    assert prompt.selected_model == "Gemini"
 
 
 def test_delete_prompt_success(test_db, sample_prompts):

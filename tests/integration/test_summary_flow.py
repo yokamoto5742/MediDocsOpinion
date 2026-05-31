@@ -157,7 +157,7 @@ class TestSyncSummaryGeneration:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        assert data["model_used"] == "Gemini_Pro"
+        assert data["model_used"] == "Gemini"
         assert data["model_switched"] is True
 
     def test_explicit_selection_bypasses_prompt_model(
@@ -165,11 +165,11 @@ class TestSyncSummaryGeneration:
     ):
         """model_explicitly_selected=TrueのときはDBプロンプトのモデル設定を無視する"""
         from app.models.prompt import Prompt
-        # DBプロンプトにGemini_Proを設定
+        # DBプロンプトにGeminiを設定
         db_session.add(Prompt(
             department="default", doctor="default",
             document_type="退院時サマリ", content="テストプロンプト",
-            selected_model="Gemini_Pro",
+            selected_model="Gemini",
         ))
         db_session.commit()
 
@@ -196,7 +196,7 @@ class TestSyncSummaryGeneration:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        # DBのGemini_Proを無視してClaudeが使用される
+        # DBのGeminiを無視してClaudeが使用される
         assert data["model_used"] == "Claude"
 
     def test_xss_input_is_sanitized_before_ai_call(

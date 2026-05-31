@@ -246,7 +246,7 @@ class TestSettingsEdgeCases:
         {
             "PROMPT_MANAGEMENT": "false",
             "APP_TYPE": "summary",
-            "SELECTED_AI_MODEL": "Gemini_Pro",
+            "SELECTED_AI_MODEL": "Gemini",
         },
         clear=True,
     )
@@ -256,7 +256,7 @@ class TestSettingsEdgeCases:
 
         assert settings.prompt_management is False
         assert settings.app_type == "summary"
-        assert settings.selected_ai_model == "Gemini_Pro"
+        assert settings.selected_ai_model == "Gemini"
 
     @patch.dict(os.environ, {}, clear=True)
     def test_settings_application_config_defaults(self):

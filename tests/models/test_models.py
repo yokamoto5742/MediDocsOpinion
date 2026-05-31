@@ -296,7 +296,7 @@ class TestSummaryUsageModel:
             department="default",
             doctor="default",
             document_type="返書",
-            model="Gemini_Pro",
+            model="Gemini",
         )
         db.add(usage)
         db.flush()

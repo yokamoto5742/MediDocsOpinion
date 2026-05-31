@@ -97,7 +97,7 @@ class TestHierarchicalPromptResolution:
         db_session.add(Prompt(
             department="内科", doctor="default",
             document_type="退院時サマリ", content="内科デフォルト",
-            selected_model="Gemini_Pro",
+            selected_model="Gemini",
         ))
         # 医師固有（Claude）
         db_session.add(Prompt(
@@ -121,7 +121,7 @@ class TestHierarchicalPromptResolution:
         db_session.add(Prompt(
             department="内科", doctor="default",
             document_type="退院時サマリ", content="内科デフォルト",
-            selected_model="Gemini_Pro",
+            selected_model="Gemini",
         ))
         db_session.commit()
 
@@ -130,7 +130,7 @@ class TestHierarchicalPromptResolution:
             params={"department": "内科", "document_type": "退院時サマリ", "doctor": "山田二郎"},
         )
         assert res.status_code == status.HTTP_200_OK
-        assert res.json()["selected_model"] == "Gemini_Pro"
+        assert res.json()["selected_model"] == "Gemini"
 
     def test_global_default_fallback(
         self, integration_client, db_session, csrf_headers
@@ -168,7 +168,7 @@ class TestHierarchicalPromptResolution:
         db_session.add(Prompt(
             department="内科", doctor="default",
             document_type="退院時サマリ", content="内科プロンプト",
-            selected_model="Gemini_Pro",
+            selected_model="Gemini",
         ))
         db_session.commit()
 
@@ -198,7 +198,7 @@ class TestHierarchicalPromptResolution:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        assert data["model_used"] == "Gemini_Pro"
+        assert data["model_used"] == "Gemini"
 
 
 class TestEvaluationPromptCRUD:

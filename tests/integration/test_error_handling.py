@@ -1,4 +1,5 @@
 """統合テスト: エラーハンドリング（AI API障害・ストリーミングエラー）"""
+
 from unittest.mock import MagicMock, patch
 
 from fastapi import status
@@ -46,11 +47,13 @@ class TestSyncAPIErrors:
         self, integration_client, db_session, csrf_headers
     ):
         """評価でAI APIが例外を投げるとsuccess=Falseレスポンスが返る"""
-        db_session.add(EvaluationPrompt(
-            document_type="退院時サマリ",
-            content="評価プロンプト",
-            is_active=True,
-        ))
+        db_session.add(
+            EvaluationPrompt(
+                document_type="退院時サマリ",
+                content="評価プロンプト",
+                is_active=True,
+            )
+        )
         db_session.commit()
 
         mock_instance = MagicMock()
@@ -58,7 +61,7 @@ class TestSyncAPIErrors:
         mock_instance._generate_content.side_effect = Exception("Gemini API障害")
         mock_cls = MagicMock(return_value=mock_instance)
 
-        with patch("app.services.evaluation_service.GeminiAPIClient", mock_cls):
+        with patch("app.services.evaluation_service.create_client", mock_cls):
             response = integration_client.post(
                 "/api/evaluation/evaluate",
                 json={
@@ -125,11 +128,13 @@ class TestStreamingErrors:
         self, integration_client, db_session, csrf_headers
     ):
         """ストリーミング評価でAI APIが例外を投げるとerror SSEイベントが返る"""
-        db_session.add(EvaluationPrompt(
-            document_type="退院時サマリ",
-            content="評価プロンプト",
-            is_active=True,
-        ))
+        db_session.add(
+            EvaluationPrompt(
+                document_type="退院時サマリ",
+                content="評価プロンプト",
+                is_active=True,
+            )
+        )
         db_session.commit()
 
         mock_instance = MagicMock()
@@ -137,7 +142,7 @@ class TestStreamingErrors:
         mock_instance._generate_content.side_effect = Exception("評価APIエラー")
         mock_cls = MagicMock(return_value=mock_instance)
 
-        with patch("app.services.evaluation_service.GeminiAPIClient", mock_cls):
+        with patch("app.services.evaluation_service.create_client", mock_cls):
             response = integration_client.post(
                 "/api/evaluation/evaluate-stream",
                 json={
@@ -160,6 +165,7 @@ class TestStreamingErrors:
         self, integration_client, db_session, csrf_headers
     ):
         """AI APIが空のレスポンスを返した場合でも正常にcompleteイベントが返る"""
+
         def empty_stream():
             yield {"input_tokens": 0, "output_tokens": 0}
 

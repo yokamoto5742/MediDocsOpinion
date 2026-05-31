@@ -53,7 +53,7 @@ class TestSettingsEndpoints:
             doctor="default",
             document_type="退院時サマリ",
             content="消化器内科用プロンプト",
-            selected_model="Gemini_Pro",
+            selected_model="Gemini",
         ))
         db_session.commit()
 
@@ -66,7 +66,7 @@ class TestSettingsEndpoints:
             },
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["selected_model"] == "Gemini_Pro"
+        assert response.json()["selected_model"] == "Gemini"
 
     def test_selected_model_without_prompt_returns_null(
         self, integration_client, db_session

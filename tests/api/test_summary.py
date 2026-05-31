@@ -50,7 +50,7 @@ def mock_summary_result_model_switched():
         input_tokens=50000,
         output_tokens=1000,
         processing_time=5.0,
-        model_used="Gemini_Pro",
+        model_used="Gemini",
         model_switched=True,
     )
 
@@ -140,7 +140,7 @@ def test_generate_summary_model_switched(client, test_db, csrf_headers, mock_sum
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is True
-        assert data["model_used"] == "Gemini_Pro"
+        assert data["model_used"] == "Gemini"
         assert data["model_switched"] is True
 
 
@@ -207,8 +207,8 @@ def test_get_available_models_gemini_only(client, test_db):
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data["available_models"] == ["Gemini_Pro"]
-        assert data["default_model"] == "Gemini_Pro"
+        assert data["available_models"] == ["Gemini"]
+        assert data["default_model"] == "Gemini"
 
 
 def test_get_available_models_both(client, test_db):
@@ -223,7 +223,7 @@ def test_get_available_models_both(client, test_db):
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert "Claude" in data["available_models"]
-        assert "Gemini_Pro" in data["available_models"]
+        assert "Gemini" in data["available_models"]
         assert data["default_model"] == "Claude"
 
 
@@ -263,7 +263,7 @@ def test_generate_summary_model_explicitly_selected(client, test_db, csrf_header
 
         payload = {
             "medical_text": "患者データ",
-            "model": "Gemini_Pro",
+            "model": "Gemini",
             "model_explicitly_selected": True,
         }
 
@@ -272,5 +272,5 @@ def test_generate_summary_model_explicitly_selected(client, test_db, csrf_header
         assert response.status_code == status.HTTP_200_OK
 
         call_args = mock_execute.call_args[1]
-        assert call_args["model"] == "Gemini_Pro"
+        assert call_args["model"] == "Gemini"
         assert call_args["model_explicitly_selected"] is True

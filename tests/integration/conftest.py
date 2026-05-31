@@ -23,7 +23,7 @@ def make_test_settings(**overrides) -> Settings:
         csrf_secret_key=INTEGRATION_CSRF_SECRET,
         claude_model="claude-test-model",
         gemini_model="gemini-test-model",
-        gemini_evaluation_model="gemini-eval-test-model",
+        evaluation_model="Gemini",
         min_input_tokens=overrides.get("min_input_tokens", 10),
         max_input_tokens=overrides.get("max_input_tokens", 300_000),
         max_token_threshold=overrides.get("max_token_threshold", 150_000),
@@ -87,6 +87,7 @@ def integration_client(integration_db, monkeypatch):
     def _validate_medical_input_1arg(text, *_args, **_kwargs):
         """validate_medical_input を1引数・2引数どちらでも動作するよう統一"""
         from app.utils.input_sanitizer import validate_medical_input as _orig
+
         return _orig(text)
 
     with (
@@ -95,10 +96,18 @@ def integration_client(integration_db, monkeypatch):
         patch("app.services.evaluation_service.settings", test_settings),
         patch("app.services.usage_service.get_db_session", override_get_db_session),
         patch("app.services.model_selector.get_db_session", override_get_db_session),
-        patch("app.services.evaluation_service.get_db_session", override_get_db_session),
+        patch(
+            "app.services.evaluation_service.get_db_session", override_get_db_session
+        ),
         patch("app.services.usage_service.get_settings", return_value=test_settings),
-        patch("app.services.summary_service.validate_medical_input", _validate_medical_input_1arg),
-        patch("app.services.evaluation_service.validate_medical_input", _validate_medical_input_1arg),
+        patch(
+            "app.services.summary_service.validate_medical_input",
+            _validate_medical_input_1arg,
+        ),
+        patch(
+            "app.services.evaluation_service.validate_medical_input",
+            _validate_medical_input_1arg,
+        ),
     ):
         yield TestClient(app)
 

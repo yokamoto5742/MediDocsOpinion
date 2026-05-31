@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-31
+
+### 追加
+
+- コード品質向上のため、Ruffコードリンターを導入
+
+### 変更
+
+- 依存関係管理を従来のpipからUVへ移行し、パフォーマンスと再現性を向上
+- 複数の依存ライブラリを最新バージョンへアップデート
+- テストの構造を改善し、セクション名を統一
+
 ## [1.0.2] - 2026-03-19
 
 ### 追加
@@ -29,7 +41,8 @@
 
 安定版初回リリース
 
-[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yourusername/MediDocsOpinion/releases/tag/v1.0.0

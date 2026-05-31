@@ -202,7 +202,7 @@ def test_get_selected_model_hierarchical_lookup(client, test_db):
         document_type="他院への紹介",
         doctor="default",
         content="診療科レベルのプロンプト",
-        selected_model="Gemini_Pro"
+        selected_model="Gemini"
     )
     test_db.add(dept_prompt)
     test_db.commit()
@@ -219,7 +219,7 @@ def test_get_selected_model_hierarchical_lookup(client, test_db):
 
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert data["selected_model"] == "Gemini_Pro"
+    assert data["selected_model"] == "Gemini"
 
 
 def test_get_selected_model_missing_parameters(client, test_db):

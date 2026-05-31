@@ -44,13 +44,13 @@ def test_create_prompt_updates_existing(client, sample_prompts, csrf_headers):
         "doctor": "橋本義弘",
         "document_type": "他院への紹介",
         "content": "更新されたプロンプト",
-        "selected_model": "Gemini_Pro",
+        "selected_model": "Gemini",
     }
     response = client.post("/api/prompts/", json=payload, headers=csrf_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["content"] == "更新されたプロンプト"
-    assert data["selected_model"] == "Gemini_Pro"
+    assert data["selected_model"] == "Gemini"
 
     response = client.get("/api/prompts/")
     prompts = response.json()

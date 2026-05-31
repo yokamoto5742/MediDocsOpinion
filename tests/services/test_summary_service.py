@@ -118,7 +118,7 @@ class TestDetermineModel:
             model_explicitly_selected=True,
         )
 
-        assert model == "Gemini_Pro"
+        assert model == "Gemini"
         assert switched is True
 
     @patch("app.services.model_selector.settings")
@@ -146,7 +146,7 @@ class TestDetermineModel:
         mock_settings.max_token_threshold = 40000
 
         model, switched = determine_model(
-            requested_model="Gemini_Pro",
+            requested_model="Gemini",
             input_length=10000,
             department="default",
             document_type="他院への紹介",
@@ -154,7 +154,7 @@ class TestDetermineModel:
             model_explicitly_selected=True,
         )
 
-        assert model == "Gemini_Pro"
+        assert model == "Gemini"
         assert switched is False
 
     @patch("app.services.model_selector.settings")
@@ -184,14 +184,14 @@ class TestDetermineModel:
 
         # モックプロンプト
         mock_prompt = MagicMock()
-        mock_prompt.selected_model = "Gemini_Pro"
+        mock_prompt.selected_model = "Gemini"
         mock_get_prompt.return_value = mock_prompt
 
         model, switched = determine_model(requested_model="Claude", input_length=10000, department="眼科",
                                           document_type="他院への紹介", doctor="橋本義弘")
 
         # プロンプトで設定されたモデルが使用される
-        assert model == "Gemini_Pro"
+        assert model == "Gemini"
         assert switched is False
 
 
@@ -225,7 +225,7 @@ class TestGetProviderAndModel:
         """プロバイダーとモデル取得 - Gemini"""
         mock_settings.gemini_model = "gemini-1.5-pro-002"
 
-        provider, model = get_provider_and_model("Gemini_Pro")
+        provider, model = get_provider_and_model("Gemini")
 
         assert provider == "gemini"
         assert model == "gemini-1.5-pro-002"
@@ -252,7 +252,7 @@ class TestGetProviderAndModel:
         mock_settings.gemini_model = None
 
         with pytest.raises(ValueError):
-            get_provider_and_model("Gemini_Pro")
+            get_provider_and_model("Gemini")
 
 
 class TestSaveUsage:
@@ -301,7 +301,7 @@ class TestSaveUsage:
             department="default",
             doctor="default",
             document_type="返書",
-            model="Gemini_Pro",
+            model="Gemini",
             input_tokens=2000,
             output_tokens=800,
             processing_time=3.0,

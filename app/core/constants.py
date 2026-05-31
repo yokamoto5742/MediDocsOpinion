@@ -3,7 +3,8 @@ from enum import Enum
 
 class ModelType(str, Enum):
     CLAUDE = "Claude"
-    GEMINI_PRO = "Gemini_Pro"
+    GEMINI_PRO = "Gemini"
+
 
 # プロンプト管理
 DEFAULT_DEPARTMENT = ["default"]
@@ -30,9 +31,9 @@ DEFAULT_SUMMARY_PROMPT = """
 # 治療経過: 内容 など(改行含む)
 # 治療経過（行全体がセクション名のみ）
 SECTION_DETECTION_PATTERNS = [
-    r'^[【\[■●\s]*{section}[】\]\s]*[:：]?\s*(.*)$',
-    r'^{section}\s*[:：]?\s*(.*)$',
-    r'^{section}\s*$',
+    r"^[【\[■●\s]*{section}[】\]\s]*[:：]?\s*(.*)$",
+    r"^{section}\s*[:：]?\s*(.*)$",
+    r"^{section}\s*$",
 ]
 
 MESSAGES: dict[str, dict[str, str]] = {
@@ -81,7 +82,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "CLAUDE_API_CREDENTIALS_MISSING": "Claude APIの認証情報が設定されていません。環境変数を確認してください。",
         "CLAUDE_MODEL_NOT_SET": "Claudeモデルが設定されていません",
         "CLOUDFLARE_GATEWAY_SETTINGS_MISSING": "Cloudflare AI Gatewayの設定が不完全です。環境変数を確認してください",
-        "EVALUATION_MODEL_MISSING": "GEMINI_EVALUATION_MODEL環境変数が設定されていません",
+        "EVALUATION_MODEL_MISSING": "EVALUATION_MODEL環境変数が設定されていません",
         "GEMINI_MODEL_NOT_SET": "Geminiモデルが設定されていません",
         "GOOGLE_LOCATION_MISSING": "GOOGLE_LOCATION環境変数が設定されていません。",
         "GOOGLE_PROJECT_ID_MISSING": "GOOGLE_PROJECT_ID環境変数が設定されていません。",
@@ -166,9 +167,15 @@ FRONTEND_MESSAGES: dict[str, dict[str, str]] = {
         "API_ERROR": MESSAGES["ERROR"]["API_ERROR"],
         "COPY_FAILED": MESSAGES["ERROR"]["COPY_FAILED"],
         "EVALUATION_ERROR": MESSAGES["ERROR"]["EVALUATION_ERROR"],
-        "EVALUATION_PROMPT_DELETE_FAILED": MESSAGES["ERROR"]["EVALUATION_PROMPT_DELETE_FAILED"],
-        "EVALUATION_PROMPT_LOAD_FAILED": MESSAGES["ERROR"]["EVALUATION_PROMPT_LOAD_FAILED"],
-        "EVALUATION_PROMPT_SAVE_FAILED": MESSAGES["ERROR"]["EVALUATION_PROMPT_SAVE_FAILED"],
+        "EVALUATION_PROMPT_DELETE_FAILED": MESSAGES["ERROR"][
+            "EVALUATION_PROMPT_DELETE_FAILED"
+        ],
+        "EVALUATION_PROMPT_LOAD_FAILED": MESSAGES["ERROR"][
+            "EVALUATION_PROMPT_LOAD_FAILED"
+        ],
+        "EVALUATION_PROMPT_SAVE_FAILED": MESSAGES["ERROR"][
+            "EVALUATION_PROMPT_SAVE_FAILED"
+        ],
         "GENERIC_ERROR": MESSAGES["ERROR"]["GENERIC_ERROR"],
         "PROMPT_CREATE_FAILED": MESSAGES["ERROR"]["PROMPT_CREATE_FAILED"],
         "PROMPT_DELETE_FAILED": MESSAGES["ERROR"]["PROMPT_DELETE_FAILED"],
@@ -176,8 +183,12 @@ FRONTEND_MESSAGES: dict[str, dict[str, str]] = {
         "PROMPT_NOT_FOUND": MESSAGES["ERROR"]["PROMPT_NOT_FOUND"],
         "PROMPT_UPDATE_FAILED": MESSAGES["ERROR"]["PROMPT_UPDATE_FAILED"],
         "RESPONSE_BODY_EMPTY": MESSAGES["ERROR"]["RESPONSE_BODY_EMPTY"],
-        "STATISTICS_AGGREGATED_LOAD_FAILED": MESSAGES["ERROR"]["STATISTICS_AGGREGATED_LOAD_FAILED"],
-        "STATISTICS_RECORDS_LOAD_FAILED": MESSAGES["ERROR"]["STATISTICS_RECORDS_LOAD_FAILED"],
+        "STATISTICS_AGGREGATED_LOAD_FAILED": MESSAGES["ERROR"][
+            "STATISTICS_AGGREGATED_LOAD_FAILED"
+        ],
+        "STATISTICS_RECORDS_LOAD_FAILED": MESSAGES["ERROR"][
+            "STATISTICS_RECORDS_LOAD_FAILED"
+        ],
     },
     "VALIDATION": {
         "ALL_REQUIRED_FIELDS": MESSAGES["VALIDATION"]["ALL_REQUIRED_FIELDS"],

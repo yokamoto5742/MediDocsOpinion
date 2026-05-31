@@ -89,12 +89,12 @@ class TestStatisticsFiltering:
     def test_model_filter(self, integration_client, db_session, csrf_headers):
         """モデルフィルターが正しく機能する"""
         _add_usage(db_session, "Claude", "内科", count=3)
-        _add_usage(db_session, "Gemini_Pro", "外科", count=2)
+        _add_usage(db_session, "Gemini", "外科", count=2)
 
         res = integration_client.get("/api/statistics/summary", params={"model": "Claude"})
         assert res.json()["total_count"] == 3
 
-        res = integration_client.get("/api/statistics/summary", params={"model": "Gemini_Pro"})
+        res = integration_client.get("/api/statistics/summary", params={"model": "Gemini"})
         assert res.json()["total_count"] == 2
 
     def test_date_filter_excludes_old_records(
@@ -134,7 +134,7 @@ class TestStatisticsFiltering:
     ):
         """集計レコードのモデルフィルターが機能する"""
         _add_usage(db_session, "Claude", "内科", count=2)
-        _add_usage(db_session, "Gemini_Pro", "内科")
+        _add_usage(db_session, "Gemini", "内科")
 
         res = integration_client.get(
             "/api/statistics/aggregated", params={"model": "Claude"}

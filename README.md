@@ -20,7 +20,7 @@
 - **Webベース UI**: プロンプトの作成と編集のための使いやすいインターフェース
 
 ### 評価と分析
-- **AI出力評価**: 生成された文書の品質をLLMで評価
+- **AI出力評価**: 生成された文書の品質をClaudeまたはGeminiで評価（EVALUATION_MODEL設定で選択可）
 - **使用統計**: API使用状況、トークン数、作成時間を追跡
 - **パフォーマンスメトリクス**: レスポンス時間とモデル別パフォーマンス監視
 - **日次利用制限**: リクエスト数、入力トークン、出力トークンの日次制限機能
@@ -130,8 +130,10 @@ GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"your-project",..
 GOOGLE_PROJECT_ID=your-gcp-project-id
 GOOGLE_LOCATION=global
 GEMINI_MODEL=gemini-2.0-flash
-GEMINI_EVALUATION_MODEL=gemini-2.0-flash
 GEMINI_THINKING_LEVEL=HIGH
+
+# 出力評価に使用するモデル（"Claude" または "Gemini"）
+EVALUATION_MODEL=Gemini
 ```
 
 ### アプリケーション設定
@@ -291,7 +293,7 @@ result = client.generate_summary(medical_text, additional_info, ...)
 
 - `summary_service.py`: 文書生成とモデル選択ロジック
 - `prompt_service.py`: プロンプト管理と階層的解決
-- `evaluation_service.py`: 出力評価
+- `evaluation_service.py`: 出力評価（Claude/Gemini両対応）
 - `statistics_service.py`: 統計処理
 
 ### 自動モデル切り替え
@@ -320,7 +322,7 @@ result = client.generate_summary(medical_text, additional_info, ...)
 
 `app/core/constants.py`で定数を一元管理：
 
-- `ModelType` Enum: "Claude"、"Gemini_Pro"などのモデル名
+- `ModelType` Enum: "Claude"、"Gemini"などのモデル名
 - `APIProvider` Enum: CLAUDE、GEMINI
 - 診療科・医師マッピング
 - 文書タイプ
@@ -461,8 +463,11 @@ pyright
   - `ANTHROPIC_MODEL`環境変数の設定確認
 - **Gemini API エラー**:
   - Google Cloud プロジェクト ID と認証情報が正しいか確認
-  - `GEMINI_EVALUATION_MODEL`環境変数が設定されているか確認
+  - `GEMINI_MODEL`環境変数が設定されているか確認
   - Vertex AIが有効化されているか確認
+- **評価モデルエラー**:
+  - `EVALUATION_MODEL`環境変数が「Claude」または「Gemini」に設定されているか確認
+  - 選択したモデル（`ANTHROPIC_MODEL`または`GEMINI_MODEL`）が設定されているか確認
 
 ### テスト失敗
 - データベースマイグレーションが完了しているか確認

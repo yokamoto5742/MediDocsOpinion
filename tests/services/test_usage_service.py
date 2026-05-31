@@ -171,7 +171,7 @@ class TestSaveUsage:
             department="default",
             doctor="default",
             document_type="返書",
-            model="Gemini_Pro",
+            model="Gemini",
             input_tokens=2000,
             output_tokens=800,
             processing_time=3.0,
