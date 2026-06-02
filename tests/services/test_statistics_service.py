@@ -83,12 +83,14 @@ def test_get_usage_records_with_limit(test_db, sample_usage_records):
 def test_get_usage_records_with_offset(test_db, sample_usage_records):
     """使用統計レコード取得 - offset指定"""
     all_records: list[SummaryUsage] = statistics_service.get_usage_records(test_db)
-    offset_records: list[SummaryUsage] = statistics_service.get_usage_records(test_db, offset=1)
+    offset_records: list[SummaryUsage] = statistics_service.get_usage_records(
+        test_db, offset=1
+    )
 
     assert len(offset_records) == 1
     assert len(all_records) != 0
     assert len(offset_records) != 0
-    assert int(offset_records[0].id) != int(all_records[0].id)
+    assert cast(int, offset_records[0].id) != cast(int, all_records[0].id)
 
 
 def test_get_usage_records_ordering(test_db, sample_usage_records):
@@ -155,7 +157,14 @@ class TestGetAggregatedRecords:
     def test_result_fields(self, test_db, sample_usage_records):
         """結果に必要なフィールドが全て含まれる"""
         results = statistics_service.get_aggregated_records(test_db)
-        required_keys = {"document_type", "department", "doctor", "count", "input_tokens", "output_tokens"}
+        required_keys = {
+            "document_type",
+            "department",
+            "doctor",
+            "count",
+            "input_tokens",
+            "output_tokens",
+        }
         for r in results:
             assert required_keys.issubset(r.keys())
 
@@ -165,7 +174,9 @@ class TestGetAggregatedRecords:
 
         results = statistics_service.get_aggregated_records(test_db)
         default_record = next(r for r in results if r["document_type"] == "返書")
-        assert default_record["department"] == MESSAGES["INFO"]["DEFAULT_DEPARTMENT_LABEL"]
+        assert (
+            default_record["department"] == MESSAGES["INFO"]["DEFAULT_DEPARTMENT_LABEL"]
+        )
         assert default_record["doctor"] == MESSAGES["INFO"]["DEFAULT_DOCTOR_LABEL"]
 
     def test_filtered_by_model(self, test_db, sample_usage_records):
@@ -176,7 +187,9 @@ class TestGetAggregatedRecords:
 
     def test_filtered_by_document_type(self, test_db, sample_usage_records):
         """document_type フィルター: 指定した文書タイプのみ返る"""
-        results = statistics_service.get_aggregated_records(test_db, document_type="返書")
+        results = statistics_service.get_aggregated_records(
+            test_db, document_type="返書"
+        )
         assert len(results) == 1
         assert results[0]["document_type"] == "返書"
 
