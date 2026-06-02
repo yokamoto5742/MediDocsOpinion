@@ -1,7 +1,6 @@
 from app.utils.input_sanitizer import (
     detect_prompt_injection,
     sanitize_medical_text,
-    sanitize_prompt_text,
     validate_medical_input,
 )
 
@@ -52,18 +51,6 @@ class TestSanitizeMedicalText:
     def test_empty_text(self):
         """空のテキストは空のまま"""
         assert sanitize_medical_text("") == ""
-
-
-class TestSanitizePromptText:
-    """プロンプトテキストサニタイゼーションのテスト"""
-
-    def test_sanitize_prompt_text(self):
-        """プロンプトテキストもサニタイゼーションされる"""
-        text = "プロンプト<script>alert('xss')</script>テキスト"
-        result = sanitize_prompt_text(text)
-        assert "<script>" not in result
-        assert "プロンプト" in result
-        assert "テキスト" in result
 
 
 class TestDetectPromptInjection:

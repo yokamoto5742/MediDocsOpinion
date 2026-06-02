@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import cast
 from zoneinfo import ZoneInfo
 
 from app.models.usage import SummaryUsage
@@ -87,14 +88,14 @@ def test_get_usage_records_with_offset(test_db, sample_usage_records):
     assert len(offset_records) == 1
     assert len(all_records) != 0
     assert len(offset_records) != 0
-    assert offset_records[0].id != all_records[0].id
+    assert int(offset_records[0].id) != int(all_records[0].id)
 
 
 def test_get_usage_records_ordering(test_db, sample_usage_records):
     """使用統計レコード取得 - 降順ソート"""
     records: list[SummaryUsage] = statistics_service.get_usage_records(test_db)
     assert len(records) > 1
-    assert records[0].date >= records[1].date
+    assert cast(datetime, records[0].date) >= cast(datetime, records[1].date)
 
 
 class TestApplyDefaultPeriod:

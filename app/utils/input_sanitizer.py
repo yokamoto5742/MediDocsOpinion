@@ -81,14 +81,6 @@ def sanitize_medical_text(text: str) -> str:
     return text
 
 
-def sanitize_prompt_text(text: str) -> str:
-    """プロンプトテキストの基本的なサニタイゼーション"""
-    if not text:
-        return text
-
-    return sanitize_medical_text(text)
-
-
 def validate_medical_input(text: str) -> Tuple[bool, str | None]:
     """
     医療テキスト入力の検証

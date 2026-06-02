@@ -14,11 +14,6 @@ class PromptCreate(PromptBase):
     pass
 
 
-class PromptUpdate(BaseModel):
-    content: str | None = None
-    selected_model: str | None = None
-
-
 class PromptResponse(PromptBase):
     id: int
     is_default: bool

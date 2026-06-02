@@ -8,7 +8,6 @@ class ModelType(str, Enum):
 
 # プロンプト管理
 DEFAULT_DEPARTMENT = ["default"]
-DEFAULT_DOCTOR = ["default"]
 DEPARTMENT_DOCTORS_MAPPING = {
     "default": ["default"],
 }
