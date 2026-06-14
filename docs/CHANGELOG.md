@@ -7,6 +7,28 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-14
+
+### 変更
+
+- 依存関係を最新バージョンへアップデート
+- DBプールリサイクル設定を環境変数から取得可能に変更
+- Claudeモデル設定を`anthropic_model`に統合
+
+### 削除
+
+- 未使用のsettings を削除
+- `DEFAULT_DOCTOR` 定数を削除
+- `sanitize_prompt_text` 関数を削除
+- `PromptUpdate` スキーマを削除
+- `statistics_records_tbody.html` テンプレートを削除
+
+### 修正
+
+- エラーメッセージを定型化し、詳細情報を非公開に変更
+- 統計レコードのID比較ロジックを修正
+- 統計レコードのソート順序を修正
+
 ## [1.1.0] - 2026-05-31
 
 ### 追加
@@ -41,8 +63,9 @@
 
 安定版初回リリース
 
-[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.3...HEAD
-[1.0.3]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.2...v1.0.3
+[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/yourusername/MediDocsOpinion/releases/tag/v1.0.0
