@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import AsyncGenerator, cast
 
@@ -10,8 +11,9 @@ from app.services.evaluation_prompt_service import get_evaluation_prompt
 from app.services.sse_helpers import sse_event, stream_with_heartbeat
 from app.services.usage_service import check_daily_limit
 from app.utils.audit_logger import log_audit_event
-from app.utils.exceptions import APIError
 from app.utils.input_sanitizer import sanitize_medical_text, validate_medical_input
+
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
@@ -175,25 +177,19 @@ def execute_evaluation(
             processing_time=processing_time,
         )
 
-    except APIError as e:
-        log_audit_event(
-            event_type=get_message("AUDIT", "EVALUATION_FAILURE"),
-            user_ip=user_ip,
-            document_type=document_type,
-            success=False,
-            error_message=str(e),
-        )
-        return _error_response(str(e), time.time() - start_time)
     except Exception as e:
-        error_msg = MESSAGES["ERROR"]["EVALUATION_API_ERROR"].format(error=str(e))
+        # 例外詳細はサーバーログのみに記録（外部APIの例外文字列に入力断片が含まれる可能性があるため）
+        logger.error("評価API呼び出しエラー", exc_info=True)
         log_audit_event(
             event_type=get_message("AUDIT", "EVALUATION_FAILURE"),
             user_ip=user_ip,
             document_type=document_type,
             success=False,
-            error_message=error_msg,
+            error_message=type(e).__name__,
         )
-        return _error_response(error_msg, time.time() - start_time)
+        return _error_response(
+            MESSAGES["ERROR"]["EVALUATION_ERROR"], time.time() - start_time
+        )
 
 
 def _run_sync_evaluation(

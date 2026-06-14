@@ -559,8 +559,9 @@ class TestExecuteSummaryGeneration:
             )
 
         assert result.success is False
-        assert result.error_message is not None
-        assert "API接続エラー" in result.error_message
+        assert result.error_message == MESSAGES["ERROR"]["API_ERROR"]
+        # 例外詳細はクライアントに返さない
+        assert "API接続エラー" not in result.error_message
 
 
 class TestExecuteSummaryGenerationStream:

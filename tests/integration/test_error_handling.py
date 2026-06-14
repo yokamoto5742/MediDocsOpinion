@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi import status
 
+from app.core.constants import MESSAGES
 from app.models.evaluation_prompt import EvaluationPrompt
 from tests.integration.conftest import parse_sse_events
 
@@ -41,7 +42,9 @@ class TestSyncAPIErrors:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["success"] is False
-        assert "Bedrock接続エラー" in data["error_message"]
+        assert data["error_message"] == MESSAGES["ERROR"]["API_ERROR"]
+        # 例外詳細はクライアントに返さない
+        assert "Bedrock接続エラー" not in data["error_message"]
 
     def test_evaluation_api_exception_returns_error_response(
         self, integration_client, db_session, csrf_headers

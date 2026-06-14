@@ -12,10 +12,7 @@ def mock_summary_result_success():
     return SummaryResponse(
         success=True,
         output_summary="主病名: 糖尿病\n治療経過: インスリン治療中",
-        parsed_summary={
-            "主病名": "糖尿病",
-            "治療経過": "インスリン治療中"
-        },
+        parsed_summary={"主病名": "糖尿病", "治療経過": "インスリン治療中"},
         input_tokens=1000,
         output_tokens=500,
         processing_time=2.5,
@@ -55,7 +52,9 @@ def mock_summary_result_model_switched():
     )
 
 
-def test_generate_summary_success(client, test_db, csrf_headers, mock_summary_result_success):
+def test_generate_summary_success(
+    client, test_db, csrf_headers, mock_summary_result_success
+):
     """文書生成API - 正常系"""
     with patch("app.api.summary.execute_summary_generation") as mock_execute:
         mock_execute.return_value = mock_summary_result_success
@@ -71,7 +70,9 @@ def test_generate_summary_success(client, test_db, csrf_headers, mock_summary_re
             "model_explicitly_selected": False,
         }
 
-        response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
+        response = client.post(
+            "/api/summary/generate", json=payload, headers=csrf_headers
+        )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -88,7 +89,9 @@ def test_generate_summary_success(client, test_db, csrf_headers, mock_summary_re
         mock_execute.assert_called_once()
 
 
-def test_generate_summary_validation_error(client, test_db, csrf_headers, mock_summary_result_failure):
+def test_generate_summary_validation_error(
+    client, test_db, csrf_headers, mock_summary_result_failure
+):
     """文書生成API - 検証エラー"""
     with patch("app.api.summary.execute_summary_generation") as mock_execute:
         mock_execute.return_value = mock_summary_result_failure
@@ -106,7 +109,9 @@ def test_generate_summary_validation_error(client, test_db, csrf_headers, mock_s
             "model_explicitly_selected": False,
         }
 
-        response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
+        response = client.post(
+            "/api/summary/generate", json=payload, headers=csrf_headers
+        )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -116,7 +121,9 @@ def test_generate_summary_validation_error(client, test_db, csrf_headers, mock_s
         assert data["output_tokens"] == 0
 
 
-def test_generate_summary_model_switched(client, test_db, csrf_headers, mock_summary_result_model_switched):
+def test_generate_summary_model_switched(
+    client, test_db, csrf_headers, mock_summary_result_model_switched
+):
     """文書生成API - モデル自動切り替え"""
     with patch("app.api.summary.execute_summary_generation") as mock_execute:
         mock_execute.return_value = mock_summary_result_model_switched
@@ -135,7 +142,9 @@ def test_generate_summary_model_switched(client, test_db, csrf_headers, mock_sum
             "model_explicitly_selected": False,
         }
 
-        response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
+        response = client.post(
+            "/api/summary/generate", json=payload, headers=csrf_headers
+        )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -154,10 +163,13 @@ def test_generate_summary_missing_required_field(client, test_db, csrf_headers):
     response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "medical_text" in response.text.lower()
+    # 検証に失敗したフィールド名はクライアントに返さない
+    assert "medical_text" not in response.text
 
 
-def test_generate_summary_all_optional_fields(client, test_db, csrf_headers, mock_summary_result_success):
+def test_generate_summary_all_optional_fields(
+    client, test_db, csrf_headers, mock_summary_result_success
+):
     """文書生成API - オプションフィールドすべて省略"""
     with patch("app.api.summary.execute_summary_generation") as mock_execute:
         mock_execute.return_value = mock_summary_result_success
@@ -166,7 +178,9 @@ def test_generate_summary_all_optional_fields(client, test_db, csrf_headers, moc
             "medical_text": "患者は40歳女性。",
         }
 
-        response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
+        response = client.post(
+            "/api/summary/generate", json=payload, headers=csrf_headers
+        )
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -256,7 +270,9 @@ def test_generate_summary_with_exception(client, test_db, csrf_headers):
             client.post("/api/summary/generate", json=payload, headers=csrf_headers)
 
 
-def test_generate_summary_model_explicitly_selected(client, test_db, csrf_headers, mock_summary_result_success):
+def test_generate_summary_model_explicitly_selected(
+    client, test_db, csrf_headers, mock_summary_result_success
+):
     """文書生成API - モデルが明示的に選択された場合"""
     with patch("app.api.summary.execute_summary_generation") as mock_execute:
         mock_execute.return_value = mock_summary_result_success
@@ -267,7 +283,9 @@ def test_generate_summary_model_explicitly_selected(client, test_db, csrf_header
             "model_explicitly_selected": True,
         }
 
-        response = client.post("/api/summary/generate", json=payload, headers=csrf_headers)
+        response = client.post(
+            "/api/summary/generate", json=payload, headers=csrf_headers
+        )
 
         assert response.status_code == status.HTTP_200_OK
 

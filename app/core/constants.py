@@ -48,7 +48,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "DAILY_OUTPUT_TOKEN_LIMIT_EXCEEDED": "本日の出力トークン制限（{limit}トークン）を超過しました。明日再度お試しください",
         "DAILY_REQUEST_LIMIT_EXCEEDED": "本日のリクエスト回数制限（{limit}回）を超過しました。明日再度お試しください",
         "EMPTY_RESPONSE": "レスポンスが空です",
-        "EVALUATION_API_ERROR": "評価中にエラーが発生しました: {error}",
         "EVALUATION_ERROR": "評価中にエラーが発生しました",
         "EVALUATION_PROMPT_DELETE_FAILED": "評価プロンプトの削除に失敗しました",
         "EVALUATION_PROMPT_LOAD_FAILED": "評価プロンプトの読み込みに失敗しました",

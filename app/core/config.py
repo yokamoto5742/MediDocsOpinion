@@ -52,8 +52,8 @@ class Settings(BaseSettings):
     daily_input_token_limit: int = 5000000
     daily_output_token_limit: int = 100000
 
-    # CSRF認証
-    csrf_secret_key: str = "default-csrf-secret-key"
+    # CSRF認証（未設定の場合は起動時にエラー）
+    csrf_secret_key: str = ""
     csrf_token_expire_minutes: int = 60
 
     # CORS設定
@@ -76,4 +76,9 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.csrf_secret_key:
+        raise RuntimeError(
+            "CSRF_SECRET_KEY環境変数が設定されていません。アプリケーションを起動できません。"
+        )
+    return settings

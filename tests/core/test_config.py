@@ -139,6 +139,19 @@ class TestGetSettings:
 
         assert settings1 is settings2
 
+    @patch.dict(os.environ, {"CSRF_SECRET_KEY": ""}, clear=True)
+    def test_get_settings_missing_csrf_secret_key_raises(self):
+        """get_settings - CSRF_SECRET_KEY 未設定なら RuntimeError"""
+        with pytest.raises(RuntimeError, match="CSRF_SECRET_KEY"):
+            get_settings()
+
+    @patch.dict(os.environ, {"CSRF_SECRET_KEY": "configured-secret-key"}, clear=True)
+    def test_get_settings_with_csrf_secret_key(self):
+        """get_settings - CSRF_SECRET_KEY 設定済みなら正常にインスタンスを返す"""
+        settings = get_settings()
+
+        assert settings.csrf_secret_key == "configured-secret-key"
+
 
 class TestSettingsEdgeCases:
     """Settings エッジケース"""

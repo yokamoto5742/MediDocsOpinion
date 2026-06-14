@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from app.core.constants import MESSAGES
 from app.services.sse_helpers import sse_event, stream_with_heartbeat
 
 
@@ -50,6 +51,7 @@ class TestStreamWithHeartbeat:
     @pytest.mark.asyncio
     async def test_stream_with_heartbeat_success(self):
         """ハートビート付きストリーミング - 正常系"""
+
         def sync_task(a: int, b: int) -> tuple[str, int, int]:
             return "結果", a, b
 
@@ -76,6 +78,7 @@ class TestStreamWithHeartbeat:
     @pytest.mark.asyncio
     async def test_stream_with_heartbeat_error(self):
         """ハートビート付きストリーミング - エラー"""
+
         def sync_task() -> tuple[str, int, int]:
             raise ValueError("テストエラー")
 
@@ -94,4 +97,6 @@ class TestStreamWithHeartbeat:
         assert any("event: error" in str(i) for i in items)
         error_items = [i for i in items if isinstance(i, str) and "event: error" in i]
         assert len(error_items) >= 1
-        assert "テストエラー" in error_items[0]
+        assert MESSAGES["ERROR"]["API_ERROR"] in error_items[0]
+        # 例外詳細はクライアントに返さない
+        assert "テストエラー" not in error_items[0]

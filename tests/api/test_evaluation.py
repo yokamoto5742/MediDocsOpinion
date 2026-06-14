@@ -321,7 +321,8 @@ def test_evaluate_output_missing_required_field(client, test_db, csrf_headers):
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "input_text" in response.text.lower()
+    # 検証に失敗したフィールド名はクライアントに返さない
+    assert "input_text" not in response.text
 
 
 def test_save_evaluation_prompt_missing_required_field(client, test_db, csrf_headers):
@@ -336,7 +337,8 @@ def test_save_evaluation_prompt_missing_required_field(client, test_db, csrf_hea
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "content" in response.text.lower()
+    # 検証に失敗したフィールド名はクライアントに返さない
+    assert "content" not in response.text
 
 
 def test_evaluate_output_stream_success(client, test_db, csrf_headers):

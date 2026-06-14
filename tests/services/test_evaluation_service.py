@@ -332,7 +332,7 @@ class TestExecuteEvaluation:
         assert result.error_message == "プロンプト未登録"
 
     def test_api_error_returns_error_response(self):
-        """APIError 例外: success=False で返る"""
+        """APIError 例外: success=False で定型文が返る"""
         from app.utils.exceptions import APIError
         from app.services.evaluation_service import execute_evaluation
 
@@ -370,17 +370,16 @@ class TestExecuteEvaluation:
             )
 
         assert result.success is False
-        assert (
-            result.error_message is not None
-            and "Gemini APIエラー" in result.error_message
-        )
+        assert result.error_message == MESSAGES["ERROR"]["EVALUATION_ERROR"]
+        # 例外詳細はクライアントに返さない
+        assert "Gemini APIエラー" not in result.error_message
 
     def test_generic_exception_returns_error_response(self):
-        """一般例外: success=False で返る"""
+        """一般例外: success=False で定型文が返る"""
         from app.services.evaluation_service import execute_evaluation
 
         mock_client = MagicMock()
-        mock_client._generate_content.side_effect = Exception("予期せぬエラー")
+        mock_client._generate_content.side_effect = Exception("予期せぬエラー詳細")
         mock_settings = MagicMock()
         mock_settings.evaluation_model = "Gemini"
         mock_settings.gemini_model = "gemini-1.5-pro"
@@ -413,7 +412,9 @@ class TestExecuteEvaluation:
             )
 
         assert result.success is False
-        assert result.error_message is not None
+        assert result.error_message == MESSAGES["ERROR"]["EVALUATION_ERROR"]
+        # 例外詳細はクライアントに返さない
+        assert "予期せぬエラー詳細" not in result.error_message
 
 
 class TestExecuteEvaluationStream:

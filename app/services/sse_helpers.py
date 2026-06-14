@@ -5,6 +5,8 @@ import time
 from collections.abc import Callable
 from typing import Any, AsyncGenerator
 
+from app.core.constants import MESSAGES
+
 
 def sse_event(event_type: str, data: dict[str, Any]) -> str:
     """SSEイベント文字列を生成"""
@@ -21,10 +23,13 @@ async def stream_with_heartbeat(
     heartbeat_interval: int = 5,
 ) -> AsyncGenerator[tuple[str, int, int] | str, None]:
     """ハートビート付きでスレッドプール上の同期処理を実行"""
-    yield sse_event("progress", {
-        "status": "starting",
-        "message": start_message,
-    })
+    yield sse_event(
+        "progress",
+        {
+            "status": "starting",
+            "message": start_message,
+        },
+    )
 
     start_time = time.time()
     queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
@@ -34,15 +39,19 @@ async def stream_with_heartbeat(
             result = await asyncio.to_thread(sync_func, *sync_func_args)
             await queue.put(("result", result))
         except Exception as e:
+            # 例外詳細はサーバーログのみに記録し、クライアントには定型メッセージを返す
             logging.error(f"Task error: {e}", exc_info=True)
-            await queue.put(("error", str(e)))
+            await queue.put(("error", MESSAGES["ERROR"]["API_ERROR"]))
 
     task = asyncio.create_task(_task())
 
-    yield sse_event("progress", {
-        "status": running_status,
-        "message": running_message,
-    })
+    yield sse_event(
+        "progress",
+        {
+            "status": running_status,
+            "message": running_message,
+        },
+    )
 
     while not task.done():
         try:
@@ -50,28 +59,37 @@ async def stream_with_heartbeat(
                 queue.get(), timeout=heartbeat_interval
             )
             if msg_type == "error":
-                yield sse_event("error", {
-                    "success": False,
-                    "error_message": msg_data,
-                })
+                yield sse_event(
+                    "error",
+                    {
+                        "success": False,
+                        "error_message": msg_data,
+                    },
+                )
                 return
             yield msg_data
             return
         except asyncio.TimeoutError:
             elapsed = int(time.time() - start_time)
-            yield sse_event("progress", {
-                "status": running_status,
-                "message": elapsed_message_template.format(elapsed=elapsed),
-            })
+            yield sse_event(
+                "progress",
+                {
+                    "status": running_status,
+                    "message": elapsed_message_template.format(elapsed=elapsed),
+                },
+            )
 
     # タスクがwhileループ前に完了した場合、キューの結果を処理する
     try:
         msg_type, msg_data = queue.get_nowait()
         if msg_type == "error":
-            yield sse_event("error", {
-                "success": False,
-                "error_message": msg_data,
-            })
+            yield sse_event(
+                "error",
+                {
+                    "success": False,
+                    "error_message": msg_data,
+                },
+            )
             return
         yield msg_data
     except asyncio.QueueEmpty:
