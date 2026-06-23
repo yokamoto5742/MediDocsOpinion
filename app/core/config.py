@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
     database_url: str | None = None
+    # Secrets Manager のシークレット名/ARN（設定時はローテーション追従を有効化）
+    db_secret_name: str | None = None
+    db_secret_ttl_seconds: int = 300
 
     # AWS Bedrock (Claude)
     aws_access_key_id: str | None = None

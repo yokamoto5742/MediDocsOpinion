@@ -15,7 +15,10 @@
       "Bash(git commit:*)",
       "Bash(dir:*)",
       "Bash(python -m pytest tests/ -v --tb=short --disable-warnings)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(python -m pytest tests/core/test_database.py -v --tb=short)",
+      "Bash(python -m pytest tests/ --tb=short -q)",
+      "Bash(ruff check *)"
     ],
     "deny": [
       "Bash(git push:*)",

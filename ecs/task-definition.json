@@ -19,7 +19,12 @@
         }
       ],
       "essential": true,
-      "environment": [],
+      "environment": [
+        {
+          "name": "DB_SECRET_NAME",
+          "value": "arn:aws:secretsmanager:ap-northeast-1:149050210156:secret:rds!db-7e7da41d-bf28-4e97-b9e6-ee14852bce56-oPxIiP"
+        }
+      ],
       "mountPoints": [],
       "volumesFrom": [],
       "secrets": [

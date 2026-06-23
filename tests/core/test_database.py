@@ -1,5 +1,6 @@
 """データベース層のテスト（インメモリ SQLite 使用、本番DBは触らない）"""
 
+import json
 from collections.abc import Generator
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -32,6 +33,7 @@ class TestGetDb:
         """`get_db` はセッションを yield すること"""
         with patch("app.core.database.SessionLocal", sqlite_session_factory):
             from app.core.database import get_db
+
             gen = get_db()
             session = next(gen)
             assert session is not None
@@ -50,6 +52,7 @@ class TestGetDb:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db
+
             gen = get_db()
             next(gen)
             try:
@@ -66,6 +69,7 @@ class TestGetDb:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db
+
             gen = cast(Generator, get_db())
             next(gen)
             try:
@@ -83,6 +87,7 @@ class TestGetDbSession:
         """`get_db_session` はセッションを yield すること"""
         with patch("app.core.database.SessionLocal", sqlite_session_factory):
             from app.core.database import get_db_session
+
             with get_db_session() as session:
                 assert session is not None
                 result = session.execute(text("SELECT 1"))
@@ -95,6 +100,7 @@ class TestGetDbSession:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db_session
+
             with get_db_session():
                 pass
 
@@ -109,6 +115,7 @@ class TestGetDbSession:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db_session
+
             with pytest.raises(ValueError, match="テストエラー"):
                 with get_db_session():
                     raise ValueError("テストエラー")
@@ -121,6 +128,7 @@ class TestGetDbSession:
 
             with patch("app.core.database.SessionLocal", mock_factory):
                 from app.core.database import get_db_session
+
                 try:
                     with get_db_session():
                         if raise_error:
@@ -137,6 +145,7 @@ class TestGetDbSession:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db_session
+
             with pytest.raises(ValueError, match="DB書き込みエラー"):
                 with get_db_session():
                     raise ValueError("DB書き込みエラー")
@@ -148,6 +157,7 @@ class TestGetDbSession:
 
         with patch("app.core.database.SessionLocal", mock_factory):
             from app.core.database import get_db_session
+
             try:
                 with get_db_session():
                     raise Exception("エラー")
@@ -178,7 +188,11 @@ class TestGetDbSession:
             # 別セッションで読み込み確認
             verify_session = sqlite_session_factory()
             try:
-                fetched = verify_session.query(Prompt).filter_by(department="テスト科").first()
+                fetched = (
+                    verify_session.query(Prompt)
+                    .filter_by(department="テスト科")
+                    .first()
+                )
                 assert fetched is not None
                 assert fetched.content == "テストコンテンツ"
             finally:
@@ -207,7 +221,56 @@ class TestGetDbSession:
             # データが存在しないこと
             verify_session = sqlite_session_factory()
             try:
-                fetched = verify_session.query(Prompt).filter_by(department="ロールバック科").first()
+                fetched = (
+                    verify_session.query(Prompt)
+                    .filter_by(department="ロールバック科")
+                    .first()
+                )
                 assert fetched is None
             finally:
                 verify_session.close()
+
+
+class TestRotatingCredentials:
+    """`_RotatingCredentials` のキャッシュ/再取得のテスト（boto3 はモック）"""
+
+    @staticmethod
+    def _build(ttl_seconds: int, password: str = "pw1"):
+        """get_secret_value をモックした認証情報キャッシュとモッククライアントを返す"""
+        mock_client = MagicMock()
+        mock_client.get_secret_value.return_value = {
+            "SecretString": json.dumps({"username": "dbuser", "password": password})
+        }
+        with patch("app.core.database.boto3.client", return_value=mock_client):
+            from app.core.database import _RotatingCredentials
+
+            credentials = _RotatingCredentials(
+                "rds-secret", "ap-northeast-1", ttl_seconds
+            )
+        return credentials, mock_client
+
+    def test_maps_username_and_password(self):
+        """シークレットの username/password を user/password に変換すること"""
+        credentials, _ = self._build(ttl_seconds=300)
+        assert credentials.get() == {"user": "dbuser", "password": "pw1"}
+
+    def test_caches_within_ttl(self):
+        """TTL 内では Secrets Manager を再呼び出ししないこと"""
+        credentials, mock_client = self._build(ttl_seconds=300)
+        credentials.get()
+        credentials.get()
+        assert mock_client.get_secret_value.call_count == 1
+
+    def test_force_refresh_refetches(self):
+        """force_refresh=True で再取得すること"""
+        credentials, mock_client = self._build(ttl_seconds=300)
+        credentials.get()
+        credentials.get(force_refresh=True)
+        assert mock_client.get_secret_value.call_count == 2
+
+    def test_refetches_after_ttl_expiry(self):
+        """TTL 切れ（ttl=0）では毎回再取得すること"""
+        credentials, mock_client = self._build(ttl_seconds=0)
+        credentials.get()
+        credentials.get()
+        assert mock_client.get_secret_value.call_count == 2
