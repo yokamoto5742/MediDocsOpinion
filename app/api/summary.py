@@ -29,6 +29,8 @@ def generate_summary(http_request: Request, request: SummaryRequest):
         model=request.model,
         model_explicitly_selected=request.model_explicitly_selected,
         user_ip=user_ip,
+        previous_summary=request.previous_summary,
+        evaluation_feedback=request.evaluation_feedback,
     )
 
 
@@ -46,6 +48,8 @@ async def generate_summary_stream(http_request: Request, request: SummaryRequest
         model=request.model,
         model_explicitly_selected=request.model_explicitly_selected,
         user_ip=user_ip,
+        previous_summary=request.previous_summary,
+        evaluation_feedback=request.evaluation_feedback,
     )
     return StreamingResponse(
         event_generator,

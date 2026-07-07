@@ -1,11 +1,12 @@
 import logging
 from typing import Tuple
 
+from anthropic import omit
 from anthropic.lib.bedrock import AnthropicBedrock
 from anthropic.types import TextBlock
 
 from app.core.config import get_settings
-from app.core.constants import MESSAGES
+from app.core.constants import CLAUDE_GENERATION_TEMPERATURE, MESSAGES
 from app.external.base_api import BaseAPIClient
 from app.utils.exceptions import APIError
 
@@ -33,12 +34,15 @@ class ClaudeAPIClient(BaseAPIClient):
         except Exception as e:
             raise APIError(MESSAGES["ERROR"]["BEDROCK_INIT_ERROR"].format(error=str(e)))
 
-    def _generate_content(self, prompt: str, model_name: str) -> Tuple[str, int, int]:
+    def _generate_content(
+        self, prompt: str, model_name: str, system_prompt: str | None = None
+    ) -> Tuple[str, int, int]:
         """
         プロンプトから要約を生成
         Args:
-            prompt: 生成用プロンプト
+            prompt: userメッセージ(カルテ等のデータ)
             model_name: 使用するモデル名
+            system_prompt: system prompt(指示)
         Returns:
             Tuple[str, int, int]: (生成された要約, 入力トークン数, 出力トークン数)
         Raises:
@@ -51,6 +55,8 @@ class ClaudeAPIClient(BaseAPIClient):
             response = self.client.messages.create(
                 model=model_name,
                 max_tokens=6000,
+                temperature=CLAUDE_GENERATION_TEMPERATURE,
+                system=system_prompt if system_prompt else omit,
                 messages=[{"role": "user", "content": prompt}],
             )
 
@@ -60,6 +66,10 @@ class ClaudeAPIClient(BaseAPIClient):
                     if isinstance(content_block, TextBlock):
                         summary_text = content_block.text
                         break
+
+            # 出力トークン上限に達した場合は途中切れの可能性を警告
+            if response.stop_reason == "max_tokens":
+                summary_text += f"\n\n{MESSAGES['WARNING']['OUTPUT_TRUNCATED']}"
 
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens

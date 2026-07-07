@@ -66,6 +66,8 @@ def execute_summary_generation(
     model: str,
     model_explicitly_selected: bool = False,
     user_ip: str | None = None,
+    previous_summary: str = "",
+    evaluation_feedback: str = "",
 ) -> SummaryResponse:
     """文書生成を実行"""
     # 監査ログ: 開始
@@ -87,6 +89,8 @@ def execute_summary_generation(
     medical_text = sanitize_medical_text(medical_text)
     additional_info = sanitize_medical_text(additional_info or "")
     previous_text = sanitize_medical_text(previous_text or "")
+    previous_summary = sanitize_medical_text(previous_summary or "")
+    evaluation_feedback = sanitize_medical_text(evaluation_feedback or "")
 
     # 入力検証
     is_valid, error_msg = validate_input(medical_text)
@@ -148,6 +152,8 @@ def execute_summary_generation(
             document_type=document_type,
             doctor=doctor,
             model_name=model_name,
+            previous_summary=previous_summary,
+            evaluation_feedback=evaluation_feedback,
         )
     except Exception as e:
         # 例外詳細はサーバーログのみに記録（外部APIの例外文字列に入力断片が含まれる可能性があるため）
@@ -210,6 +216,8 @@ def _run_sync_generation(
     document_type: str,
     doctor: str,
     model_name: str,
+    previous_summary: str = "",
+    evaluation_feedback: str = "",
 ) -> tuple[str, int, int]:
     """同期ストリーミングジェネレータをスレッドプールで実行"""
     stream = generate_summary_stream_with_provider(
@@ -221,6 +229,8 @@ def _run_sync_generation(
         document_type=document_type,
         doctor=doctor,
         model_name=model_name,
+        previous_summary=previous_summary,
+        evaluation_feedback=evaluation_feedback,
     )
     chunks = []
     metadata = {}
@@ -246,6 +256,8 @@ async def execute_summary_generation_stream(
     model: str,
     model_explicitly_selected: bool = False,
     user_ip: str | None = None,
+    previous_summary: str = "",
+    evaluation_feedback: str = "",
 ) -> AsyncGenerator[str, None]:
     """SSEストリーミングで文書生成を実行"""
     # 監査ログ: 開始
@@ -268,6 +280,8 @@ async def execute_summary_generation_stream(
     medical_text = sanitize_medical_text(medical_text)
     additional_info = sanitize_medical_text(additional_info or "")
     previous_text = sanitize_medical_text(previous_text or "")
+    previous_summary = sanitize_medical_text(previous_summary or "")
+    evaluation_feedback = sanitize_medical_text(evaluation_feedback or "")
 
     # 入力検証
     is_valid, error_msg = validate_input(medical_text)
@@ -340,6 +354,8 @@ async def execute_summary_generation_stream(
             document_type,
             doctor,
             model_name,
+            previous_summary,
+            evaluation_feedback,
         ),
         start_message=MESSAGES["STATUS"]["DOCUMENT_GENERATION_START"],
         running_status="generating",

@@ -6,6 +6,7 @@
     <!-- ボタン -->
     <div class="mb-6 flex gap-4">
         {{ m.primary_button("コピー", click="copyToClipboard(evaluationResult.result)") }}
+        {{ m.success_button("指摘を反映して再生成", disabled_model="isGenerating", loading_text="再生成中...", click="regenerateWithFeedback()") }}
         {{ m.secondary_button("出力結果に戻る", "backToOutput()") }}
     </div>
 

@@ -12,6 +12,9 @@ class SummaryRequest(BaseModel):
     document_type: str = DEFAULT_DOCUMENT_TYPE
     model: str = ModelType.CLAUDE.value
     model_explicitly_selected: bool = False
+    # 評価の指摘を反映した再生成用（両方指定時のみ有効）
+    previous_summary: str = ""
+    evaluation_feedback: str = ""
 
 
 class SummaryResponse(BaseModel):

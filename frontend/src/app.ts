@@ -31,11 +31,14 @@ interface AppState {
     isEvaluating: boolean;
     evaluationElapsedTime: number;
     evaluationTimerInterval: ReturnType<typeof setInterval> | null;
+    refinement: { previousSummary: string; evaluationFeedback: string };
     init(): Promise<void>;
     updateDoctors(): Promise<void>;
     startTimer(): void;
     stopTimer(): void;
+    buildGenerateRequestBody(): Record<string, unknown>;
     generateSummary(): Promise<void>;
+    regenerateWithFeedback(): Promise<void>;
     processSSEStream(response: Response): Promise<void>;
     handleSSEEvent(eventText: string): void;
     generateSummaryFallback(): Promise<void>;
@@ -111,6 +114,12 @@ export function appState(): AppState {
         evaluationElapsedTime: 0,
         evaluationTimerInterval: null,
 
+        // 指摘を反映した再生成用コンテキスト
+        refinement: {
+            previousSummary: '',
+            evaluationFeedback: ''
+        },
+
         async init() {
             await this.updateDoctors();
             await this.updateSelectedModel();
@@ -172,6 +181,21 @@ export function appState(): AppState {
             }
         },
 
+        buildGenerateRequestBody(): Record<string, unknown> {
+            return {
+                previous_text: this.form.previousText,
+                medical_text: this.form.medicalText,
+                additional_info: this.form.additionalInfo,
+                department: this.settings.department,
+                doctor: this.settings.doctor,
+                document_type: this.settings.documentType,
+                model: this.settings.model,
+                model_explicitly_selected: true,
+                previous_summary: this.refinement.previousSummary,
+                evaluation_feedback: this.refinement.evaluationFeedback
+            };
+        },
+
         async generateSummary() {
             if (!this.form.medicalText.trim()) {
                 this.error = window.MESSAGES?.VALIDATION?.NO_INPUT ?? 'カルテ情報を入力してください';
@@ -186,16 +210,7 @@ export function appState(): AppState {
                 const response = await fetch('/api/summary/generate-stream', {
                     method: 'POST',
                     headers: getHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({
-                        previous_text: this.form.previousText,
-                        medical_text: this.form.medicalText,
-                        additional_info: this.form.additionalInfo,
-                        department: this.settings.department,
-                        doctor: this.settings.doctor,
-                        document_type: this.settings.documentType,
-                        model: this.settings.model,
-                        model_explicitly_selected: true
-                    })
+                    body: JSON.stringify(this.buildGenerateRequestBody())
                 });
 
                 if (!response.ok) {
@@ -301,20 +316,28 @@ export function appState(): AppState {
             }
         },
 
+        async regenerateWithFeedback() {
+            if (!this.result.outputSummary || !this.evaluationResult.result) {
+                this.error = window.MESSAGES?.VALIDATION?.EVALUATION_NO_OUTPUT ?? '評価対象の出力がありません';
+                return;
+            }
+
+            this.refinement = {
+                previousSummary: this.result.outputSummary,
+                evaluationFeedback: this.evaluationResult.result
+            };
+            try {
+                await this.generateSummary();
+            } finally {
+                this.refinement = { previousSummary: '', evaluationFeedback: '' };
+            }
+        },
+
         async generateSummaryFallback() {
             const response = await fetch('/api/summary/generate', {
                 method: 'POST',
                 headers: getHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify({
-                    previous_text: this.form.previousText,
-                    medical_text: this.form.medicalText,
-                    additional_info: this.form.additionalInfo,
-                    department: this.settings.department,
-                    doctor: this.settings.doctor,
-                    document_type: this.settings.documentType,
-                    model: this.settings.model,
-                    model_explicitly_selected: true
-                })
+                body: JSON.stringify(this.buildGenerateRequestBody())
             });
 
             const data = await response.json() as SummaryResponse;

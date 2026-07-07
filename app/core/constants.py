@@ -25,6 +25,28 @@ DEFAULT_DOCUMENT_TYPE = "主治医意見書"
 DEFAULT_SUMMARY_PROMPT = """
 以下のカルテ情報を要約してください。これまでの治療内容を記載してください。
 """
+
+# app/external/claude_api.py
+# 医療文書のため事実性・再現性を優先した低めの温度
+CLAUDE_GENERATION_TEMPERATURE = 0.2
+
+# app/external/base_api.py
+GROUNDING_INSTRUCTION = """## 厳守事項
+- カルテ情報に記載のない情報を追加しないでください
+- カルテの記載日時に沿って時系列で整理してください"""
+
+KARTE_JSON_INSTRUCTION = """## カルテ情報の形式
+- カルテ情報はJSON形式で提供されます
+- 日時フィールドをもとに時系列を把握してください
+- JSONのキー名をそのまま文書に転記しないでください"""
+
+REFINEMENT_INSTRUCTION = """## 修正指示
+<前回の生成結果>と<評価結果>が与えられます。評価結果の指摘を反映して、前回の生成結果を修正した文書を出力してください。指摘のない箇所は変更しないでください。"""
+
+# app/services/evaluation_service.py
+EVALUATION_GROUNDING_INSTRUCTION = """## 評価の厳守事項
+- 各指摘には、根拠となるカルテの該当箇所を引用してください
+- カルテに根拠のない記述があれば、ハルシネーションの可能性として必ず指摘してください"""
 # app/utils/text_processor.py
 # 【治療経過】: 内容 など(改行含む)
 # 治療経過: 内容 など(改行含む)
@@ -88,6 +110,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "THRESHOLD_EXCEEDED_NO_GEMINI": "入力が長すぎますが、Geminiモデルが設定されていません",
         "UNSUPPORTED_MODEL": "サポートされていないモデル: {model}",
         "VERTEX_AI_PROJECT_MISSING": "GOOGLE_PROJECT_ID環境変数が設定されていません",
+    },
+    "WARNING": {
+        "OUTPUT_TRUNCATED": "※出力が上限に達したため、文書が途中で切れている可能性があります",
     },
     "VALIDATION": {
         "ALL_REQUIRED_FIELDS": "すべての必須項目を入力してください",

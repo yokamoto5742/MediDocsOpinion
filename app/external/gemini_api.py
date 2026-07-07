@@ -63,7 +63,9 @@ class GeminiAPIClient(BaseAPIClient):
         except Exception as e:
             raise APIError(MESSAGES["ERROR"]["VERTEX_AI_INIT_ERROR"].format(error=str(e)))
 
-    def _generate_content(self, prompt: str, model_name: str) -> Tuple[str, int, int]:
+    def _generate_content(
+        self, prompt: str, model_name: str, system_prompt: str | None = None
+    ) -> Tuple[str, int, int]:
         try:
             if self.client is None:
                 raise APIError(MESSAGES["ERROR"]["GEMINI_CLIENT_NOT_INITIALIZED"])
@@ -77,6 +79,7 @@ class GeminiAPIClient(BaseAPIClient):
                 model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
                     thinking_config=types.ThinkingConfig(
                         thinking_level=thinking_level
                     )
@@ -104,7 +107,7 @@ class GeminiAPIClient(BaseAPIClient):
             raise APIError(MESSAGES["ERROR"]["VERTEX_AI_API_ERROR"].format(error=str(e)))
 
     def _generate_content_stream(
-        self, prompt: str, model_name: str
+        self, prompt: str, model_name: str, system_prompt: str | None = None
     ) -> Generator[Union[str, dict], None, None]:
         """ストリーミングでコンテンツを生成"""
         try:
@@ -121,6 +124,7 @@ class GeminiAPIClient(BaseAPIClient):
                 model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
                     thinking_config=types.ThinkingConfig(
                         thinking_level=thinking_level
                     )

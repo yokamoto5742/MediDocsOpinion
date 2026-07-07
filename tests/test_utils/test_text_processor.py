@@ -64,6 +64,31 @@ class TestFormatOutputSummary:
         result = format_output_summary(input_text)
         assert result == "入院経過:アムロジピン"
 
+    def test_format_preserve_space_between_ascii(self):
+        """フォーマット - 英数字間のスペースは保持"""
+        input_text = "CRP 0.5 mg/dL"
+        result = format_output_summary(input_text)
+        assert result == "CRP 0.5 mg/dL"
+
+    def test_format_preserve_english_words(self):
+        """フォーマット - 英単語間のスペースは保持し全角に隣接するスペースは削除"""
+        input_text = "Parkinson disease あり"
+        result = format_output_summary(input_text)
+        assert result == "Parkinson diseaseあり"
+
+    def test_format_mixed_japanese_english(self):
+        """フォーマット - 日本語と英語の混在行"""
+        input_text = "検査結果 : CRP 0.5 mg/dL で改善傾向"
+        result = format_output_summary(input_text)
+        # 全角に隣接するスペースのみ削除される（":" と "CRP" は英数字間なので保持）
+        assert result == "検査結果: CRP 0.5 mg/dLで改善傾向"
+
+    def test_format_remove_trailing_spaces(self):
+        """フォーマット - 行末のスペースを削除"""
+        input_text = "治療経過: アムロジピン  \nCRP 0.5 mg/dL  "
+        result = format_output_summary(input_text)
+        assert result == "治療経過:アムロジピン\nCRP 0.5 mg/dL"
+
 
 class TestParseOutputSummary:
     """parse_output_summary 関数のテスト

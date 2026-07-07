@@ -45,6 +45,8 @@ def generate_summary_with_provider(
     document_type: str = DEFAULT_DOCUMENT_TYPE,
     doctor: str = "default",
     model_name: str | None = None,
+    previous_summary: str = "",
+    evaluation_feedback: str = "",
 ):
     """指定されたプロバイダーで文書を生成"""
     client = create_client(provider)
@@ -56,6 +58,8 @@ def generate_summary_with_provider(
         document_type,
         doctor,
         model_name,
+        previous_summary,
+        evaluation_feedback,
     )
 
 
@@ -68,6 +72,8 @@ def generate_summary_stream_with_provider(
     document_type: str = DEFAULT_DOCUMENT_TYPE,
     doctor: str = "default",
     model_name: str | None = None,
+    previous_summary: str = "",
+    evaluation_feedback: str = "",
 ):
     """指定されたプロバイダーでストリーム形式の文書を生成"""
     client = create_client(provider)
@@ -79,4 +85,6 @@ def generate_summary_stream_with_provider(
         document_type,
         doctor,
         model_name,
+        previous_summary,
+        evaluation_feedback,
     )

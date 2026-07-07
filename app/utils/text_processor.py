@@ -15,8 +15,13 @@ def format_output_summary(summary_text: str) -> str:
         summary_text.replace('*', '')
         .replace('＊', '')
         .replace('#', '')
-        .replace(' ', '')
     )
+
+    # 全角文字に隣接する半角スペースのみ削除（英数字間のスペースは保持）
+    processed_text = re.sub(r'(?<=[^\x00-\x7F]) +', '', processed_text)
+    processed_text = re.sub(r' +(?=[^\x00-\x7F])', '', processed_text)
+    # 行末の余分なスペースを削除
+    processed_text = re.sub(r' +$', '', processed_text, flags=re.MULTILINE)
 
     return processed_text
 
