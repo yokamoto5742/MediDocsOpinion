@@ -2,35 +2,29 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
+      "Bash(dir:*)",
+      "Bash(git commit:*)",
       "Bash(python -m pytest tests/ -v)",
       "Bash(python -m pytest --version)",
       "Bash(windows-notify:*)",
       "Bash(python -m pytest tests/ -v --tb=short)",
-      "Bash(py -m pytest tests/ -v --tb=short)",
-      "Bash(py -c \"import pytest; print(pytest.__version__)\")",
       "Bash(claude config --help)",
       "Bash(claude config list)",
       "Bash(powershell:*)",
       "Bash(claude config get hooks)",
-      "Bash(git commit:*)",
-      "Bash(dir:*)",
       "Bash(python -m pytest tests/ -v --tb=short --disable-warnings)",
-      "Bash(rm:*)",
-      "Bash(python -m pytest tests/core/test_database.py -v --tb=short)",
-      "Bash(python -m pytest tests/ --tb=short -q)",
-      "Bash(ruff check *)"
+      "Bash(rm:*)"
     ],
     "deny": [
-      "Bash(git push:*)",
       "Bash(git reset:*)",
       "Bash(git rebase:*)",
       "Read(.env.*)",
       "Read(id_rsa)",
       "Read(id_ed25519)",
       "Read(docs/LICENSE*)",
-      "Write(.env*)",
-      "Write(docs/LICENSE*)",
-      "Write(**/secrets/**)",
+      "Edit(.env*)",
+      "Edit(docs/LICENSE*)",
+      "Edit(**/secrets/**)",
       "Bash(curl:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm remove:*)",
@@ -39,17 +33,7 @@
     "ask": []
   },
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "jq -r '.tool_input.file_path // empty' | tr -d '\\r' | { read -r f; case \"$f\" in *.py) python -m ruff format \"$f\";; esac; } 2>/dev/null || true"
-          }
-        ]
-      }
-    ],
+    "PostToolUse": [],
     "PermissionRequest": [
       {
         "matcher": "",

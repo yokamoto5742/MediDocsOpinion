@@ -6,14 +6,14 @@ description: テスト実行コマンドとテスト方針
 
 ```bash
 # 全件
-python -m pytest tests/ -v --tb=short
+.venv\Scripts\python.exe -m pytest tests/ -v --tb=short
 
 # 単一ファイル
-python -m pytest tests/services/test_summary_service.py -v
+.venv\Scripts\python.exe -m pytest tests/service/test_keep_doc_merge.py -v
 
 # 単一テスト
-python -m pytest tests/services/test_summary_service.py::test_generate_summary -v
+.venv\Scripts\python.exe -m pytest tests/service/test_keep_doc_merge.py::test_merge_memo_trashes_copy_after_merge -v
 
 # カバレッジ付き
-python -m pytest tests/ -v --tb=short --cov=app --cov-report=html
+.venv\Scripts\python.exe -m pytest tests/ -v --tb=short --cov=app --cov-report=html
 ```
