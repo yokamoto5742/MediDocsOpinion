@@ -1,6 +1,6 @@
 [project]
 name = "medidocs-opinion"
-version = "1.1.0"
+version = "1.2.0"
 requires-python = ">=3.13"
 dependencies = [
     # === Web Framework ===
@@ -16,8 +16,7 @@ dependencies = [
     "anthropic>=0.67.0",
     "boto3>=1.40.30",
     "google-cloud-aiplatform>=1.113.0",
-    "google-genai>=1.52.0",
-    "google-generativeai>=0.8.4",
+    "google-genai>=2.3.0",
     "grpcio>=1.78.2",
     # === HTTP / Networking ===
     "httpx>=0.28.1",

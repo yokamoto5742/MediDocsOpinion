@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-30
+
+### 変更
+
+- **Gemini呼び出しを Interactions API に移行**: `generateContent` から `client.interactions.create` に切り替え（通常生成・ストリーミングとも）。トークン数は `usage.total_input_tokens` / `total_output_tokens` から取得
+- **Gemini応答の保存を無効化**: 患者情報を含むため `store=False` を指定し、Google 側にリクエスト・応答を保存しないように変更
+- **依存関係の更新**: `google-genai` の下限を 2.3.0 に引き上げ（Interactions API 対応版）
+
+### 削除
+
+- **未使用の依存関係**: `google-generativeai` を削除（コードから未参照で、Python 3.14 環境で `google-genai` 2.x との依存解決を妨げていたため）
+
 ## [1.1.1] - 2026-06-14
 
 ### 変更

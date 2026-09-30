@@ -1,8 +1,8 @@
 import json
-from typing import Generator, Tuple, Union
+from typing import Any, Generator, Tuple, Union
 
 from google import genai
-from google.genai import types
+from google.genai import interactions
 from google.oauth2 import service_account
 
 from app.core.config import get_settings
@@ -63,89 +63,72 @@ class GeminiAPIClient(BaseAPIClient):
         except Exception as e:
             raise APIError(MESSAGES["ERROR"]["VERTEX_AI_INIT_ERROR"].format(error=str(e)))
 
+    def _thinking_level(self) -> str:
+        return "low" if self.settings.gemini_thinking_level == "LOW" else "high"
+
+    def _create_interaction(
+        self, prompt: str, model_name: str, system_prompt: str, stream: bool
+    ) -> Any:
+        if self.client is None:
+            raise APIError(MESSAGES["ERROR"]["GEMINI_CLIENT_NOT_INITIALIZED"])
+
+        request: dict[str, Any] = {
+            "model": model_name,
+            "input": prompt,
+            "generation_config": {"thinking_level": self._thinking_level()},
+            # 患者情報を含むためサーバー側に保存しない
+            "store": False,
+        }
+        if system_prompt:
+            request["system_instruction"] = system_prompt
+        if stream:
+            request["stream"] = True
+
+        return self.client.interactions.create(**request)
+
     def _generate_content(
-        self, prompt: str, model_name: str, system_prompt: str | None = None
+        self, prompt: str, model_name: str, system_prompt: str = ""
     ) -> Tuple[str, int, int]:
         try:
-            if self.client is None:
-                raise APIError(MESSAGES["ERROR"]["GEMINI_CLIENT_NOT_INITIALIZED"])
-
-            thinking_level = (
-                types.ThinkingLevel.LOW
-                if self.settings.gemini_thinking_level == "LOW"
-                else types.ThinkingLevel.HIGH
+            interaction = self._create_interaction(
+                prompt, model_name, system_prompt, stream=False
             )
-            response = self.client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    thinking_config=types.ThinkingConfig(
-                        thinking_level=thinking_level
-                    )
-                )
-            )
+            if not isinstance(interaction, interactions.Interaction):
+                raise APIError(MESSAGES["ERROR"]["GEMINI_UNEXPECTED_RESPONSE"])
 
-            result_text = ""
-            if hasattr(response, 'text') and response.text is not None:
-                result_text = str(response.text)
-            else:
-                result_text = str(response)
-
-            input_tokens = 0
-            output_tokens = 0
-
-            if hasattr(response, 'usage_metadata') and response.usage_metadata is not None:
-                metadata = response.usage_metadata
-                if hasattr(metadata, 'prompt_token_count') and metadata.prompt_token_count is not None:
-                    input_tokens = int(metadata.prompt_token_count)
-                if hasattr(metadata, 'candidates_token_count') and metadata.candidates_token_count is not None:
-                    output_tokens = int(metadata.candidates_token_count)
-
-            return result_text, input_tokens, output_tokens
+            input_tokens, output_tokens = _token_counts(interaction.usage)
+            return interaction.output_text or "", input_tokens, output_tokens
         except Exception as e:
             raise APIError(MESSAGES["ERROR"]["VERTEX_AI_API_ERROR"].format(error=str(e)))
 
     def _generate_content_stream(
-        self, prompt: str, model_name: str, system_prompt: str | None = None
+        self, prompt: str, model_name: str, system_prompt: str = ""
     ) -> Generator[Union[str, dict], None, None]:
         """ストリーミングでコンテンツを生成"""
         try:
-            if self.client is None:
-                raise APIError(MESSAGES["ERROR"]["GEMINI_CLIENT_NOT_INITIALIZED"])
-
-            thinking_level = (
-                types.ThinkingLevel.LOW
-                if self.settings.gemini_thinking_level == "LOW"
-                else types.ThinkingLevel.HIGH
-            )
-
-            response_stream = self.client.models.generate_content_stream(
-                model=model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    thinking_config=types.ThinkingConfig(
-                        thinking_level=thinking_level
-                    )
-                )
+            event_stream = self._create_interaction(
+                prompt, model_name, system_prompt, stream=True
             )
 
             input_tokens = 0
             output_tokens = 0
 
-            for chunk in response_stream:
-                if hasattr(chunk, 'text') and chunk.text:
-                    yield chunk.text
-
-                if hasattr(chunk, 'usage_metadata') and chunk.usage_metadata:
-                    metadata = chunk.usage_metadata
-                    if hasattr(metadata, 'prompt_token_count') and metadata.prompt_token_count:
-                        input_tokens = int(metadata.prompt_token_count)
-                    if hasattr(metadata, 'candidates_token_count') and metadata.candidates_token_count:
-                        output_tokens = int(metadata.candidates_token_count)
+            for event in event_stream:
+                if isinstance(event, interactions.StepDelta):
+                    if isinstance(event.delta, interactions.TextDelta) and event.delta.text:
+                        yield event.delta.text
+                elif isinstance(event, interactions.InteractionCompletedEvent):
+                    input_tokens, output_tokens = _token_counts(event.interaction.usage)
 
             yield {"input_tokens": input_tokens, "output_tokens": output_tokens}
 
         except Exception as e:
             raise APIError(MESSAGES["ERROR"]["VERTEX_AI_API_ERROR"].format(error=str(e)))
+
+
+def _token_counts(usage: interactions.Usage | None) -> Tuple[int, int]:
+    """(入力トークン数, 出力トークン数) を返す"""
+    if usage is None:
+        return 0, 0
+    return usage.total_input_tokens or 0, usage.total_output_tokens or 0
+

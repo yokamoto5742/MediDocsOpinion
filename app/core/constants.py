@@ -3,7 +3,7 @@ from enum import Enum
 
 class ModelType(str, Enum):
     CLAUDE = "Claude"
-    GEMINI_PRO = "Gemini"
+    GEMINI = "Gemini"
 
 
 # プロンプト管理

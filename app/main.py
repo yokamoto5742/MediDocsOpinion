@@ -28,7 +28,7 @@ settings = get_settings()
 
 app = FastAPI(
     title="MediDocsLM API",
-    version="1.0.0",
+    version="1.2.0",
     docs_url=None, # 開発段階では "/api/docs"
     redoc_url=None,
 )

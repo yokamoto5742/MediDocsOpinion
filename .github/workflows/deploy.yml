@@ -18,6 +18,11 @@ permissions:
   id-token: write   # OIDC認証に必要
   contents: read
 
+# 同時実行されたデプロイが互いのECSデプロイを上書きしないよう直列化する
+concurrency:
+  group: deploy-ecs
+  cancel-in-progress: false
+
 jobs:
   test:
     name: テスト実行
@@ -53,7 +58,7 @@ jobs:
 
       - name: テストを実行
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/medidocs_test
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/medidocs_test
           AWS_REGION: ap-northeast-1
           ANTHROPIC_MODEL: jp.anthropic.claude-haiku-4-5-20251001-v1:0
           CSRF_SECRET_KEY: test-secret-key

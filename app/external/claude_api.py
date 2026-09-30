@@ -1,8 +1,7 @@
 import logging
 from typing import Tuple
 
-from anthropic import omit
-from anthropic.lib.bedrock import AnthropicBedrock
+from anthropic import AnthropicBedrock, omit  # type: ignore[attr-defined]
 from anthropic.types import TextBlock
 
 from app.core.config import get_settings
@@ -35,14 +34,14 @@ class ClaudeAPIClient(BaseAPIClient):
             raise APIError(MESSAGES["ERROR"]["BEDROCK_INIT_ERROR"].format(error=str(e)))
 
     def _generate_content(
-        self, prompt: str, model_name: str, system_prompt: str | None = None
+        self, prompt: str, model_name: str, system_prompt: str = ""
     ) -> Tuple[str, int, int]:
         """
         プロンプトから要約を生成
         Args:
-            prompt: userメッセージ(カルテ等のデータ)
+            prompt: 生成用プロンプト
             model_name: 使用するモデル名
-            system_prompt: system prompt(指示)
+            system_prompt: システムプロンプト(空の場合は指定しない)
         Returns:
             Tuple[str, int, int]: (生成された要約, 入力トークン数, 出力トークン数)
         Raises:
@@ -55,9 +54,10 @@ class ClaudeAPIClient(BaseAPIClient):
             response = self.client.messages.create(
                 model=model_name,
                 max_tokens=6000,
-                temperature=CLAUDE_GENERATION_TEMPERATURE,
-                system=system_prompt if system_prompt else omit,
+                system=system_prompt or omit,
                 messages=[{"role": "user", "content": prompt}],
+                # anthropic SDK 1.x で temperature 引数が削除されたため extra_body で送信する
+                extra_body={"temperature": CLAUDE_GENERATION_TEMPERATURE},
             )
 
             summary_text = MESSAGES["ERROR"]["EMPTY_RESPONSE"]
@@ -67,9 +67,9 @@ class ClaudeAPIClient(BaseAPIClient):
                         summary_text = content_block.text
                         break
 
-            # 出力トークン上限に達した場合は途中切れの可能性を警告
+            # max_tokens到達で途中終了した場合はユーザーに分かるよう警告を付加
             if response.stop_reason == "max_tokens":
-                summary_text += f"\n\n{MESSAGES['WARNING']['OUTPUT_TRUNCATED']}"
+                summary_text += "\n\n" + MESSAGES["WARNING"]["OUTPUT_TRUNCATED"]
 
             input_tokens = response.usage.input_tokens
             output_tokens = response.usage.output_tokens

@@ -4,6 +4,8 @@ from urllib.parse import quote_plus
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.constants import ModelType
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +28,6 @@ class Settings(BaseSettings):
     db_pool_timeout: int = 30
     db_pool_recycle: int = 1800
     database_url: str | None = None
-    # Secrets Manager のシークレット名/ARN（設定時はローテーション追従を有効化）
     db_secret_name: str | None = None
     db_secret_ttl_seconds: int = 300
 
@@ -42,7 +43,9 @@ class Settings(BaseSettings):
     google_project_id: str | None = None
     google_location: str = "global"
     gemini_thinking_level: str = "HIGH"
-    evaluation_model: str | None = None
+
+    # 出力評価
+    evaluation_model: str = ModelType.GEMINI.value
 
     # Application
     max_input_tokens: int = 300000
@@ -72,7 +75,7 @@ class Settings(BaseSettings):
         ssl_param = "?sslmode=require" if self.postgres_ssl else ""
         encoded_password = quote_plus(self.postgres_password)
         return (
-            f"postgresql://{self.postgres_user}:{encoded_password}"
+            f"postgresql+psycopg2://{self.postgres_user}:{encoded_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}{ssl_param}"
         )
 
