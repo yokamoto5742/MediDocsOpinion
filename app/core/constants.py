@@ -76,6 +76,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "EVALUATION_PROMPT_NOT_FOUND": "{document_type}の評価プロンプトが見つかりません",
         "EVALUATION_PROMPT_SAVE_FAILED": "評価プロンプトの保存に失敗しました",
         "GEMINI_CLIENT_NOT_INITIALIZED": "Gemini API クライアントが初期化されていません",
+        "GEMINI_UNEXPECTED_RESPONSE": "Gemini API から想定外のレスポンスが返されました",
         "GENERIC_ERROR": "エラーが発生しました",
         "INPUT_ERROR": "入力エラーが発生しました",
         "MODEL_NAME_NOT_SPECIFIED": "モデル名が指定されていません",

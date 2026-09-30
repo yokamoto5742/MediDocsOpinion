@@ -36,7 +36,7 @@ class BaseAPIClient(ABC):
 
     @abstractmethod
     def _generate_content(
-        self, prompt: str, model_name: str, system_prompt: str | None = None
+        self, prompt: str, model_name: str, system_prompt: str = ""
     ) -> Tuple[str, int, int]:
         """
         プロンプトから要約を生成
@@ -153,7 +153,7 @@ class BaseAPIClient(ABC):
             )
 
     def _generate_content_stream(
-        self, prompt: str, model_name: str, system_prompt: str | None = None
+        self, prompt: str, model_name: str, system_prompt: str = ""
     ) -> Generator[Union[str, dict], None, None]:
         """ストリーミングのデフォルト実装"""
         text, input_tokens, output_tokens = self._generate_content(

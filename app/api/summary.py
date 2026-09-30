@@ -69,7 +69,7 @@ def get_available_models():
     if settings.anthropic_model:
         models.append(ModelType.CLAUDE.value)
     if settings.gemini_model:
-        models.append(ModelType.GEMINI_PRO.value)
+        models.append(ModelType.GEMINI.value)
     return {
         "available_models": models,
         "default_model": models[0] if models else None,

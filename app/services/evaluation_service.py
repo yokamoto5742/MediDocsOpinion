@@ -27,7 +27,7 @@ def _resolve_evaluation_model() -> tuple[str, str | None]:
     """EVALUATION_MODEL からプロバイダーとモデル名を解決"""
     if settings.evaluation_model == ModelType.CLAUDE.value:
         return ModelType.CLAUDE.value, settings.anthropic_model
-    return ModelType.GEMINI_PRO.value, settings.gemini_model
+    return ModelType.GEMINI.value, settings.gemini_model
 
 
 def _error_response(error_msg: str, processing_time: float = 0.0) -> EvaluationResponse:

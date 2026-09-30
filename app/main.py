@@ -60,7 +60,7 @@ def get_available_models() -> list[str]:
     if settings.anthropic_model:
         models.append(ModelType.CLAUDE.value)
     if settings.gemini_model:
-        models.append(ModelType.GEMINI_PRO.value)
+        models.append(ModelType.GEMINI.value)
     return models if models else [ModelType.CLAUDE.value]
 
 
