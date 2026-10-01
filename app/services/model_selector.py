@@ -1,9 +1,19 @@
 from app.core.config import get_settings
-from app.core.constants import MESSAGES, ModelType
+from app.core.constants import MESSAGES, ModelType, get_message
 from app.core.database import get_db_session
-from app.external.api_factory import APIProvider
+from app.services.prompt_service import get_selected_model
 
 settings = get_settings()
+
+
+def get_available_models() -> list[str]:
+    """モデル名が設定済みで利用可能なモデル一覧を取得"""
+    models = []
+    if settings.anthropic_model:
+        models.append(ModelType.CLAUDE.value)
+    if settings.gemini_model:
+        models.append(ModelType.GEMINI.value)
+    return models
 
 
 def determine_model(
@@ -17,8 +27,6 @@ def determine_model(
     """モデル自動切替判定"""
     if not model_explicitly_selected:
         try:
-            from app.services.prompt_service import get_selected_model
-
             with get_db_session() as db:
                 selected = get_selected_model(db, department, document_type, doctor)
                 if selected is not None:
@@ -40,19 +48,19 @@ def determine_model(
     return requested_model, False
 
 
-def get_provider_and_model(selected_model: str) -> tuple[str, str]:
-    """モデル名からプロバイダーとモデル名を取得"""
+def get_provider_and_model(selected_model: str) -> tuple[ModelType, str]:
+    """選択されたモデルからクライアント種別と実際のモデル名を取得"""
     if selected_model == ModelType.CLAUDE:
         model = settings.anthropic_model
         if not model:
             raise ValueError(MESSAGES["CONFIG"]["CLAUDE_MODEL_NOT_SET"])
-        return APIProvider.CLAUDE.value, model
+        return ModelType.CLAUDE, model
     elif selected_model == ModelType.GEMINI:
         model = settings.gemini_model
         if not model:
             raise ValueError(MESSAGES["CONFIG"]["GEMINI_MODEL_NOT_SET"])
-        return APIProvider.GEMINI.value, model
+        return ModelType.GEMINI, model
     else:
         raise ValueError(
-            MESSAGES["CONFIG"]["UNSUPPORTED_MODEL"].format(model=selected_model)
+            get_message("CONFIG", "UNSUPPORTED_MODEL", model=selected_model)
         )

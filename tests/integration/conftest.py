@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
@@ -84,12 +84,6 @@ def integration_client(integration_db, monkeypatch):
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_settings] = lambda: test_settings
 
-    def _validate_medical_input_1arg(text, *_args, **_kwargs):
-        """validate_medical_input を1引数・2引数どちらでも動作するよう統一"""
-        from app.utils.input_sanitizer import validate_medical_input as _orig
-
-        return _orig(text)
-
     with (
         patch("app.services.summary_service.settings", test_settings),
         patch("app.services.model_selector.settings", test_settings),
@@ -99,15 +93,7 @@ def integration_client(integration_db, monkeypatch):
         patch(
             "app.services.evaluation_service.get_db_session", override_get_db_session
         ),
-        patch("app.services.usage_service.get_settings", return_value=test_settings),
-        patch(
-            "app.services.summary_service.validate_medical_input",
-            _validate_medical_input_1arg,
-        ),
-        patch(
-            "app.services.evaluation_service.validate_medical_input",
-            _validate_medical_input_1arg,
-        ),
+        patch("app.services.usage_service.settings", test_settings),
     ):
         yield TestClient(app)
 
@@ -121,6 +107,20 @@ def csrf_headers(monkeypatch):
     monkeypatch.setenv("CSRF_SECRET_KEY", INTEGRATION_CSRF_SECRET)
     token = generate_csrf_token(make_test_settings())
     return {"X-CSRF-Token": token}
+
+
+def patch_summary_client(result: tuple[str, int, int] = ("生成テキスト", 100, 50)):
+    """文書生成で使うAI APIクライアントの生成を差し替える（with 文で使用し、生成関数のモックを受け取る）"""
+    mock_create = MagicMock()
+    mock_create.return_value.generate_summary.return_value = result
+    return patch("app.services.summary_service.create_client", mock_create)
+
+
+def last_event(response) -> dict:
+    """SSEレスポンスの最後のイベント（complete または error）を返す"""
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers["content-type"]
+    return parse_sse_events(response.text)[-1]
 
 
 def parse_sse_events(response_text: str) -> list[dict]:

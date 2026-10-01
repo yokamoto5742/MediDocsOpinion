@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EvaluationRequest(BaseModel):
@@ -9,15 +9,6 @@ class EvaluationRequest(BaseModel):
     previous_text: str = ""
     additional_info: str = ""
     output_summary: str
-
-
-class EvaluationResponse(BaseModel):
-    success: bool
-    evaluation_result: str = ""
-    input_tokens: int = 0
-    output_tokens: int = 0
-    processing_time: float = 0.0
-    error_message: str | None = None
 
 
 class EvaluationPromptRequest(BaseModel):
@@ -32,6 +23,8 @@ class EvaluationPromptResponse(BaseModel):
     is_active: bool = True
     created_at: datetime | None = None
     updated_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EvaluationPromptListResponse(BaseModel):

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import desc, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 
 from app.core.constants import DEFAULT_STATISTICS_PERIOD_DAYS, MESSAGES
 from app.models.usage import SummaryUsage
@@ -23,6 +23,28 @@ def _apply_default_period(
     return start_date, end_date
 
 
+def _apply_filters(
+    query: Query,
+    start_date: datetime | None,
+    end_date: datetime | None,
+    model: str | None = None,
+    document_type: str | None = None,
+) -> Query:
+    """期間（未指定時はデフォルト期間）とモデル・文書タイプで絞り込む"""
+    start_date, end_date = _apply_default_period(start_date, end_date)
+    query = query.filter(SummaryUsage.date >= start_date, SummaryUsage.date <= end_date)
+    if model:
+        query = query.filter(SummaryUsage.model == model)
+    if document_type:
+        query = query.filter(SummaryUsage.document_type == document_type)
+    return query
+
+
+def _label(value: str | None, default_label: str) -> str:
+    """値が default または未設定の場合は共通ラベルに読み替える"""
+    return default_label if value in (None, "", "default") else value
+
+
 def get_usage_summary(
     db: Session,
     start_date: datetime | None = None,
@@ -30,21 +52,13 @@ def get_usage_summary(
     model: str | None = None,
 ) -> dict:
     """使用統計サマリを取得"""
-    start_date, end_date = _apply_default_period(start_date, end_date)
-
     query = db.query(
         func.count(SummaryUsage.id),
         func.sum(SummaryUsage.input_tokens),
         func.sum(SummaryUsage.output_tokens),
         func.avg(SummaryUsage.processing_time),
     )
-
-    query = query.filter(SummaryUsage.date >= start_date)
-    query = query.filter(SummaryUsage.date <= end_date)
-    if model:
-        query = query.filter(SummaryUsage.model == model)
-
-    stats = query.first()
+    stats = _apply_filters(query, start_date, end_date, model).first()
 
     if stats is None:
         return {
@@ -70,8 +84,6 @@ def get_aggregated_records(
     document_type: str | None = None,
 ) -> list[dict]:
     """文書別集計統計データを取得"""
-    start_date, end_date = _apply_default_period(start_date, end_date)
-
     query = db.query(
         SummaryUsage.document_type,
         SummaryUsage.department,
@@ -80,16 +92,9 @@ def get_aggregated_records(
         func.sum(SummaryUsage.input_tokens).label("input_tokens"),
         func.sum(SummaryUsage.output_tokens).label("output_tokens"),
     )
-
-    query = query.filter(SummaryUsage.date >= start_date)
-    query = query.filter(SummaryUsage.date <= end_date)
-    if model:
-        query = query.filter(SummaryUsage.model == model)
-    if document_type:
-        query = query.filter(SummaryUsage.document_type == document_type)
-
     results = (
-        query.group_by(
+        _apply_filters(query, start_date, end_date, model, document_type)
+        .group_by(
             SummaryUsage.document_type, SummaryUsage.department, SummaryUsage.doctor
         )
         .order_by(desc("count"))
@@ -99,8 +104,8 @@ def get_aggregated_records(
     return [
         {
             "document_type": r.document_type or "-",
-            "department": MESSAGES["INFO"]["DEFAULT_DEPARTMENT_LABEL"] if r.department == "default" else (r.department or MESSAGES["INFO"]["DEFAULT_DEPARTMENT_LABEL"]),
-            "doctor": MESSAGES["INFO"]["DEFAULT_DOCTOR_LABEL"] if r.doctor == "default" else (r.doctor or MESSAGES["INFO"]["DEFAULT_DOCTOR_LABEL"]),
+            "department": _label(r.department, MESSAGES["INFO"]["DEFAULT_DEPARTMENT_LABEL"]),
+            "doctor": _label(r.doctor, MESSAGES["INFO"]["DEFAULT_DOCTOR_LABEL"]),
             "count": r.count,
             "input_tokens": r.input_tokens or 0,
             "output_tokens": r.output_tokens or 0,
@@ -119,15 +124,7 @@ def get_usage_records(
     offset: int = 0,
 ) -> list[SummaryUsage]:
     """使用統計レコードを取得"""
-    start_date, end_date = _apply_default_period(start_date, end_date)
-
-    query = db.query(SummaryUsage)
-
-    query = query.filter(SummaryUsage.date >= start_date)
-    query = query.filter(SummaryUsage.date <= end_date)
-    if model:
-        query = query.filter(SummaryUsage.model == model)
-    if document_type:
-        query = query.filter(SummaryUsage.document_type == document_type)
-
+    query = _apply_filters(
+        db.query(SummaryUsage), start_date, end_date, model, document_type
+    )
     return query.order_by(SummaryUsage.date.desc()).offset(offset).limit(limit).all()

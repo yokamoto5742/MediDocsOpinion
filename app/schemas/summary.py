@@ -15,15 +15,3 @@ class SummaryRequest(BaseModel):
     # 評価の指摘を反映した再生成用（両方指定時のみ有効）
     previous_summary: str = ""
     evaluation_feedback: str = ""
-
-
-class SummaryResponse(BaseModel):
-    success: bool
-    output_summary: str
-    parsed_summary: dict[str, str]
-    input_tokens: int
-    output_tokens: int
-    processing_time: float
-    model_used: str
-    model_switched: bool
-    error_message: str | None = None

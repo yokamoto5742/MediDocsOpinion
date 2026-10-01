@@ -9,24 +9,23 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.core.config import Settings, get_settings
+from app.core.constants import MESSAGES
 
 
 CSRF_TOKEN_HEADER = APIKeyHeader(name="X-CSRF-Token", auto_error=False)
 
 
-def get_secret_key(settings: Settings) -> bytes:
-    """CSRF署名用の秘密鍵を取得"""
-    return settings.csrf_secret_key.encode()
+def _sign(timestamp: int, settings: Settings) -> str:
+    """タイムスタンプに対するHMAC署名を計算"""
+    return hmac.new(
+        settings.csrf_secret_key.encode(), str(timestamp).encode(), hashlib.sha256
+    ).hexdigest()
 
 
 def generate_csrf_token(settings: Settings) -> str:
     """CSRFトークンを生成"""
     timestamp = int(time.time())
-    secret_key = get_secret_key(settings)
-    signature = hmac.new(
-        secret_key, str(timestamp).encode(), hashlib.sha256
-    ).hexdigest()
-    return f"{timestamp}.{signature}"
+    return f"{timestamp}.{_sign(timestamp, settings)}"
 
 
 def verify_csrf_token(token: str, settings: Settings) -> bool:
@@ -43,13 +42,8 @@ def verify_csrf_token(token: str, settings: Settings) -> bool:
     if current_time - timestamp > expire_seconds:
         return False
 
-    # 署名検証
-    secret_key = get_secret_key(settings)
-    expected_signature = hmac.new(
-        secret_key, str(timestamp).encode(), hashlib.sha256
-    ).hexdigest()
-
-    return hmac.compare_digest(signature, expected_signature)
+    # 署名検証（タイミング攻撃を避けるため定数時間で比較）
+    return hmac.compare_digest(signature, _sign(timestamp, settings))
 
 
 async def require_csrf_token(
@@ -64,14 +58,14 @@ async def require_csrf_token(
     if csrf_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="CSRFトークンが必要です",
+            detail=MESSAGES["ERROR"]["CSRF_TOKEN_REQUIRED"],
             headers={"WWW-Authenticate": "CSRF-Token"},
         )
 
     if not verify_csrf_token(csrf_token, settings):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="無効または期限切れのCSRFトークンです",
+            detail=MESSAGES["ERROR"]["CSRF_TOKEN_INVALID"],
         )
 
     return csrf_token

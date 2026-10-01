@@ -1,4 +1,3 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.prompt import Prompt
@@ -6,8 +5,7 @@ from app.models.prompt import Prompt
 
 def get_all_prompts(db: Session) -> list[Prompt]:
     """全プロンプトを取得"""
-    query = select(Prompt).order_by(Prompt.updated_at.desc())
-    return list(db.execute(query).scalars().all())
+    return db.query(Prompt).order_by(Prompt.updated_at.desc()).all()
 
 
 def get_prompt(
@@ -53,7 +51,7 @@ def get_selected_model(
     """プロンプトから選択されたモデル名を取得"""
     prompt = get_prompt(db, department, document_type, doctor)
     if prompt and prompt.selected_model:
-        return str(prompt.selected_model)
+        return prompt.selected_model
     return None
 
 

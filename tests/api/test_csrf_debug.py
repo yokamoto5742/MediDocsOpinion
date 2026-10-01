@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 def test_csrf_check(client: TestClient):
     """CSRF認証が動作しているか確認"""
     response = client.post(
-        "/api/summary/generate",
+        "/api/summary/generate-stream",
         json={
             "medical_text": "test",
             "department": "内科",

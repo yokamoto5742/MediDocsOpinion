@@ -1,9 +1,9 @@
 """統合テスト: プロンプト管理（CRUD + 階層的解決）"""
-from unittest.mock import patch
-
 from fastapi import status
 
+from app.core.constants import ModelType
 from app.models.prompt import Prompt
+from tests.integration.conftest import last_event, patch_summary_client
 
 _BASE_PROMPT = {
     "department": "内科",
@@ -172,18 +172,9 @@ class TestHierarchicalPromptResolution:
         ))
         db_session.commit()
 
-        captured: dict = {}
-
-        def capture_generate(**kwargs):
-            captured["provider"] = kwargs.get("provider", "")
-            return "生成テキスト", 100, 50
-
-        with patch(
-            "app.services.summary_service.generate_summary_with_provider",
-            side_effect=capture_generate,
-        ):
+        with patch_summary_client() as mock_create:
             response = integration_client.post(
-                "/api/summary/generate",
+                "/api/summary/generate-stream",
                 json={
                     "medical_text": _VALID_MEDICAL_TEXT,
                     "department": "内科",
@@ -195,10 +186,12 @@ class TestHierarchicalPromptResolution:
                 headers=csrf_headers,
             )
 
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        data = last_event(response)["data"]
         assert data["success"] is True
         assert data["model_used"] == "Gemini"
+        # 入力長による自動切替ではないため、切替フラグは立たない
+        assert data["model_switched"] is False
+        mock_create.assert_called_once_with(ModelType.GEMINI)
 
 
 class TestEvaluationPromptCRUD:

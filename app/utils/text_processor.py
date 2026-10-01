@@ -1,12 +1,22 @@
 import re
 
-from app.core.constants import DEFAULT_SECTION_NAMES, SECTION_DETECTION_PATTERNS
+from app.core.constants import DEFAULT_SECTION_NAMES, SECTION_DETECTION_PATTERN
 
-section_aliases = {
+# AIが別名で出力した見出しを正規のセクション名に読み替える
+SECTION_ALIASES = {
     "その他": "備考",
     "補足": "備考",
     "メモ": "備考"
 }
+
+# セクション見出しの検出パターン（グループ1: セクション名または別名、グループ2: 同じ行の内容）
+_SECTION_PATTERN = re.compile(
+    SECTION_DETECTION_PATTERN.format(
+        sections="|".join(
+            re.escape(name) for name in [*DEFAULT_SECTION_NAMES, *SECTION_ALIASES]
+        )
+    )
+)
 
 
 def format_output_summary(summary_text: str) -> str:
@@ -26,55 +36,36 @@ def format_output_summary(summary_text: str) -> str:
     return processed_text
 
 
+def _match_section(line: str) -> tuple[str, str] | None:
+    """行がセクション見出しなら (セクション名, 同じ行の内容) を返す"""
+    match = _SECTION_PATTERN.match(line)
+    if not match:
+        return None
+    name = match.group(1)
+    return SECTION_ALIASES.get(name, name), match.group(2).strip()
+
+
 def parse_output_summary(summary_text: str) -> dict[str, str]:
     """AI出力をセクションごとに分割してパース"""
     sections = {section: "" for section in DEFAULT_SECTION_NAMES}
-    lines = summary_text.split('\n')
     current_section = None
 
-    all_section_names = list(sections.keys()) + list(section_aliases.keys())
-
-    for line in lines:
+    for line in summary_text.split('\n'):
         line = line.strip()
         if not line:
             continue
 
-        found_section = False
-        detected_section = None
-        remaining_content = ""
-
-        for section in all_section_names:
-            patterns = [
-                pattern.format(section=re.escape(section)) for pattern in SECTION_DETECTION_PATTERNS
-            ]
-
-            for pattern in patterns:
-                match = re.match(pattern, line)
-                if match:
-                    if section in section_aliases:
-                        detected_section = section_aliases[section]
-                    else:
-                        detected_section = section
-
-                    if match.groups():
-                        remaining_content = match.group(1).strip()
-                    else:
-                        remaining_content = ""
-
-                    found_section = True
-                    break
-
-            if found_section:
-                break
-
-        if found_section:
-            current_section = detected_section
-            if remaining_content and current_section:
-                sections[current_section] = remaining_content
-        elif current_section and line:
+        matched = _match_section(line)
+        if matched:
+            current_section, content = matched
+            # 見出しと同じ行に内容がある場合は、そのセクションの内容を置き換える
+            if content:
+                sections[current_section] = content
+        elif current_section:
+            # 最初の見出しより前の行はどのセクションにも属さないため捨てる
             if sections[current_section]:
                 sections[current_section] += "\n" + line
             else:
                 sections[current_section] = line
 
-    return {k: sections.get(k, "") for k in DEFAULT_SECTION_NAMES}
+    return sections

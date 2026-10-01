@@ -34,6 +34,7 @@ TypeScriptの型エラーをチェックします。
 npm run build
 ```
 
+型チェック（`tsc --noEmit`）を実行してからビルドします。型エラーがあるとビルドは失敗します。
 ビルド成果物は`../app/static/dist/`に出力されます。
 
 ## ディレクトリ構造
@@ -41,9 +42,13 @@ npm run build
 ```
 frontend/
 ├── src/
-│   ├── main.ts          # エントリーポイント
-│   ├── app.ts           # Alpine.jsアプリケーションロジック
+│   ├── main.ts          # エントリーポイント（Alpine.jsコンポーネントの登録）
+│   ├── app.ts           # 文書作成画面のロジック
+│   ├── api.ts           # fetchラッパー（CSRFヘッダー、SSE読み取り）
+│   ├── utils.ts         # 日時表示・ソートなどの共通処理
 │   ├── types.ts         # 型定義
+│   ├── globals.d.ts     # サーバーから渡されるwindow変数の型宣言
+│   ├── pages/           # プロンプト管理・評価プロンプト・統計ページのロジック
 │   └── styles/
 │       └── main.css     # Tailwind CSS + カスタムスタイル
 ├── package.json
@@ -56,7 +61,8 @@ frontend/
 ## 開発フロー
 
 1. **新機能追加時:**
-   - `src/app.ts`に型付きでメソッドを追加
+   - `src/app.ts`または`src/pages/`に型付きでメソッドを追加（テンプレートに`<script>`を直接書かない）
+   - 新しいページのコンポーネントは`src/main.ts`で`Alpine.data()`に登録
    - `src/types.ts`に必要な型定義を追加
    - テンプレート（`app/templates/`）でメソッドを呼び出し
 

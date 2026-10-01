@@ -2,106 +2,108 @@
 
 from unittest.mock import MagicMock, patch
 
-from fastapi import status
-
+from app.core.constants import MESSAGES, ModelType
 from app.models.evaluation_prompt import EvaluationPrompt
-from tests.integration.conftest import parse_sse_events
+from tests.integration.conftest import last_event, parse_sse_events
+
+STREAM_URL = "/api/evaluation/evaluate-stream"
+
+DOCUMENT_TYPE = "主治医意見書"
 
 VALID_OUTPUT_SUMMARY = (
-    "現病歴: 2型糖尿病にて加療中。\n"
-    "入院経過: 血糖コントロール良好となり退院。\n"
-    "退院時状況: 全身状態良好。"
+    "治療経過: 2型糖尿病にて加療中。血糖コントロール良好。\n"
+    "特記事項: 全身状態良好。"
 )
 
 
 def _make_mock_create_client(evaluation_text: str = "評価結果: 適切な要約です。"):
     """create_client のモックを生成"""
     mock_instance = MagicMock()
-    mock_instance.initialize.return_value = None
-    mock_instance._generate_content.return_value = (evaluation_text, 500, 200)
-    mock_create = MagicMock(return_value=mock_instance)
-    return mock_create
+    mock_instance.generate_content.return_value = (evaluation_text, 500, 200)
+    return MagicMock(return_value=mock_instance)
 
 
-class TestSyncEvaluation:
-    def test_success_returns_evaluation_result(
+def _payload(**overrides) -> dict:
+    return {
+        "document_type": DOCUMENT_TYPE,
+        "input_text": "患者は67歳男性。糖尿病にて加療中。",
+        "previous_text": "メトホルミン500mg",
+        "additional_info": "",
+        "output_summary": VALID_OUTPUT_SUMMARY,
+        **overrides,
+    }
+
+
+class TestEvaluation:
+    def test_success_emits_complete_event(
         self, integration_client, db_session, csrf_headers
     ):
-        """正常系: 評価プロンプトあり状態で評価が成功する"""
+        """正常系: 評価プロンプトあり状態で progress→complete のSSEイベントが返る"""
         db_session.add(
             EvaluationPrompt(
-                document_type="退院時サマリ",
-                content="以下の退院時サマリを評価してください。",
+                document_type=DOCUMENT_TYPE,
+                content="以下の主治医意見書を評価してください。",
                 is_active=True,
             )
         )
         db_session.commit()
 
-        with patch(
-            "app.services.evaluation_service.create_client",
-            _make_mock_create_client(),
-        ):
+        mock_create = _make_mock_create_client()
+        with patch("app.services.evaluation_service.create_client", mock_create):
             response = integration_client.post(
-                "/api/evaluation/evaluate",
-                json={
-                    "document_type": "退院時サマリ",
-                    "input_text": "患者は67歳男性。糖尿病にて加療中。",
-                    "previous_text": "メトホルミン500mg",
-                    "additional_info": "",
-                    "output_summary": VALID_OUTPUT_SUMMARY,
-                },
-                headers=csrf_headers,
+                STREAM_URL, json=_payload(), headers=csrf_headers
             )
 
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is True
-        assert data["evaluation_result"] != ""
-        assert data["input_tokens"] == 500
-        assert data["output_tokens"] == 200
-        assert data["error_message"] is None
+        events = parse_sse_events(response.text)
+        assert [e["type"] for e in events[:-1]] == ["progress", "progress"]
 
-    def test_no_evaluation_prompt_returns_error(
+        complete = last_event(response)
+        assert complete["type"] == "complete"
+        assert complete["data"] == {
+            "success": True,
+            "evaluation_result": "評価結果: 適切な要約です。",
+            "input_tokens": 500,
+            "output_tokens": 200,
+            "processing_time": complete["data"]["processing_time"],
+        }
+
+        # 評価モデルの設定（Gemini）とDBの評価プロンプトが使われる
+        mock_create.assert_called_once_with(ModelType.GEMINI)
+        user_message, model_name, system_prompt = (
+            mock_create.return_value.generate_content.call_args[0]
+        )
+        assert VALID_OUTPUT_SUMMARY in user_message
+        assert "メトホルミン500mg" in user_message
+        assert model_name == "gemini-test-model"
+        assert system_prompt.startswith("以下の主治医意見書を評価してください。")
+
+    def test_no_evaluation_prompt_emits_error(
         self, integration_client, db_session, csrf_headers
     ):
-        """評価プロンプトが未設定の場合はエラーレスポンスを返す"""
+        """評価プロンプトが未設定の場合はerrorイベントを返す"""
         response = integration_client.post(
-            "/api/evaluation/evaluate",
-            json={
-                "document_type": "退院時サマリ",
-                "input_text": "患者情報テキスト",
-                "previous_text": "",
-                "additional_info": "",
-                "output_summary": VALID_OUTPUT_SUMMARY,
-            },
-            headers=csrf_headers,
+            STREAM_URL, json=_payload(), headers=csrf_headers
         )
 
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is False
-        assert "退院時サマリ" in data["error_message"]
+        error = last_event(response)
+        assert error["type"] == "error"
+        assert error["data"]["success"] is False
+        assert DOCUMENT_TYPE in error["data"]["error_message"]
 
-    def test_empty_output_summary_returns_validation_error(
+    def test_empty_output_summary_emits_validation_error(
         self, integration_client, db_session, csrf_headers
     ):
         """評価対象の出力が空の場合はバリデーションエラーを返す"""
         response = integration_client.post(
-            "/api/evaluation/evaluate",
-            json={
-                "document_type": "退院時サマリ",
-                "input_text": "患者情報",
-                "previous_text": "",
-                "additional_info": "",
-                "output_summary": "",
-            },
-            headers=csrf_headers,
+            STREAM_URL, json=_payload(output_summary=""), headers=csrf_headers
         )
 
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is False
-        assert data["error_message"] is not None
+        error = last_event(response)
+        assert error["type"] == "error"
+        assert error["data"] == {
+            "success": False,
+            "error_message": MESSAGES["VALIDATION"]["EVALUATION_NO_OUTPUT"],
+        }
 
     def test_evaluation_prompt_crud_then_evaluate(
         self, integration_client, db_session, csrf_headers
@@ -110,8 +112,8 @@ class TestSyncEvaluation:
         integration_client.post(
             "/api/evaluation/prompts",
             json={
-                "document_type": "現病歴",
-                "content": "以下の現病歴を詳細に評価してください。",
+                "document_type": "訪問看護指示書",
+                "content": "以下の訪問看護指示書を詳細に評価してください。",
             },
             headers=csrf_headers,
         )
@@ -121,78 +123,11 @@ class TestSyncEvaluation:
             _make_mock_create_client("詳細な評価結果です。"),
         ):
             response = integration_client.post(
-                "/api/evaluation/evaluate",
-                json={
-                    "document_type": "現病歴",
-                    "input_text": "患者情報テキスト",
-                    "previous_text": "",
-                    "additional_info": "",
-                    "output_summary": VALID_OUTPUT_SUMMARY,
-                },
+                STREAM_URL,
+                json=_payload(document_type="訪問看護指示書"),
                 headers=csrf_headers,
             )
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["success"] is True
-
-
-class TestStreamingEvaluation:
-    def test_success_emits_complete_event(
-        self, integration_client, db_session, csrf_headers
-    ):
-        """ストリーミング評価でcompleteイベントが返る"""
-        db_session.add(
-            EvaluationPrompt(
-                document_type="退院時サマリ",
-                content="以下の退院時サマリを評価してください。",
-                is_active=True,
-            )
-        )
-        db_session.commit()
-
-        with patch(
-            "app.services.evaluation_service.create_client",
-            _make_mock_create_client("評価完了: 高品質なサマリです。"),
-        ):
-            response = integration_client.post(
-                "/api/evaluation/evaluate-stream",
-                json={
-                    "document_type": "退院時サマリ",
-                    "input_text": "患者情報テキスト",
-                    "previous_text": "",
-                    "additional_info": "",
-                    "output_summary": VALID_OUTPUT_SUMMARY,
-                },
-                headers=csrf_headers,
-            )
-
-        assert response.status_code == status.HTTP_200_OK
-        assert "text/event-stream" in response.headers["content-type"]
-
-        events = parse_sse_events(response.text)
-        complete_events = [e for e in events if e["type"] == "complete"]
-        assert len(complete_events) > 0
-        assert complete_events[0]["data"]["success"] is True
-        assert complete_events[0]["data"]["evaluation_result"] != ""
-
-    def test_no_prompt_emits_error_event(
-        self, integration_client, db_session, csrf_headers
-    ):
-        """評価プロンプト未設定時のストリーミングはerrorイベントが返る"""
-        response = integration_client.post(
-            "/api/evaluation/evaluate-stream",
-            json={
-                "document_type": "退院時サマリ",
-                "input_text": "患者情報",
-                "previous_text": "",
-                "additional_info": "",
-                "output_summary": VALID_OUTPUT_SUMMARY,
-            },
-            headers=csrf_headers,
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        events = parse_sse_events(response.text)
-        error_events = [e for e in events if e["type"] == "error"]
-        assert len(error_events) > 0
-        assert error_events[0]["data"]["success"] is False
+        complete = last_event(response)
+        assert complete["type"] == "complete"
+        assert complete["data"]["evaluation_result"] == "詳細な評価結果です。"

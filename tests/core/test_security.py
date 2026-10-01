@@ -1,5 +1,7 @@
 """CSRF認証のテスト"""
 import asyncio
+import hashlib
+import hmac
 import time
 from unittest.mock import MagicMock
 
@@ -8,7 +10,6 @@ from fastapi import HTTPException
 
 from app.core.security import (
     generate_csrf_token,
-    get_secret_key,
     require_csrf_token,
     verify_csrf_token,
 )
@@ -150,24 +151,20 @@ class TestRequireCsrfToken:
         assert "無効または期限切れのCSRFトークンです" in exc_info.value.detail
 
 
-class TestGetSecretKey:
-    """get_secret_key関数のテスト"""
+class TestTokenSignature:
+    """トークン署名のテスト"""
 
-    def test_uses_configured_key(self):
-        """設定された秘密鍵を使用"""
+    def test_signature_uses_configured_key(self):
+        """設定された秘密鍵でタイムスタンプをHMAC-SHA256署名している"""
         mock_settings = MagicMock()
         mock_settings.csrf_secret_key = "test-secret-key"
 
-        key = get_secret_key(mock_settings)
-        assert key == b"test-secret-key"
+        timestamp, signature = generate_csrf_token(mock_settings).split(".")
 
-    def test_requires_configured_key(self):
-        """csrf_secret_keyが必須であることをテスト"""
-        mock_settings = MagicMock()
-        mock_settings.csrf_secret_key = "required-secret-key"
-
-        key = get_secret_key(mock_settings)
-        assert key == b"required-secret-key"
+        expected = hmac.new(
+            b"test-secret-key", timestamp.encode(), hashlib.sha256
+        ).hexdigest()
+        assert signature == expected
 
 
 class TestSecurityHeadersMiddleware:

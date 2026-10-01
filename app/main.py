@@ -17,6 +17,7 @@ from app.core.constants import (
     ModelType,
 )
 from app.core.security import SecurityHeadersMiddleware, generate_csrf_token
+from app.services.model_selector import get_available_models
 from app.utils.error_handlers import api_exception_handler, validation_exception_handler
 
 logging.basicConfig(
@@ -54,22 +55,13 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(api_router, prefix="/api")
 
 
-def get_available_models() -> list[str]:
-    """利用可能なモデル一覧を取得"""
-    models = []
-    if settings.anthropic_model:
-        models.append(ModelType.CLAUDE.value)
-    if settings.gemini_model:
-        models.append(ModelType.GEMINI.value)
-    return models if models else [ModelType.CLAUDE.value]
-
-
 def get_common_context(active_page: str = "index") -> dict:
     """共通コンテキストを取得"""
     return {
         "departments": DEFAULT_DEPARTMENT,
         "document_types": DOCUMENT_TYPES,
-        "available_models": get_available_models(),
+        # モデル未設定でも選択肢が空にならないよう Claude を表示する
+        "available_models": get_available_models() or [ModelType.CLAUDE.value],
         "tab_names": ["全文"] + list(DEFAULT_SECTION_NAMES),
         "active_page": active_page,
         "csrf_token": generate_csrf_token(settings),

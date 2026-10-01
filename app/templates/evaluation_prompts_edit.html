@@ -3,7 +3,7 @@
 {% block title %}評価プロンプト編集{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl" x-data="evaluationPromptEditPage()">
+<div class="max-w-4xl" x-data='evaluationPromptEditPage({{ document_type | tojson }})'>
     <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">評価プロンプト編集</h2>
 
     <!-- 戻るボタン -->
@@ -44,66 +44,4 @@
         </div>
     </div>
 </div>
-
-<script>
-function evaluationPromptEditPage() {
-    return {
-        documentType: '{{ document_type }}',
-        content: '',
-        isSaving: false,
-        error: null,
-
-        async init() {
-            await this.loadPrompt();
-        },
-
-        async loadPrompt() {
-            try {
-                const response = await fetch(`/api/evaluation/prompts/${encodeURIComponent(this.documentType)}`);
-                const data = await response.json();
-                if (data.content) {
-                    this.content = data.content;
-                }
-            } catch (e) {
-                this.error = window.MESSAGES.ERROR.EVALUATION_PROMPT_LOAD_FAILED;
-            }
-        },
-
-        async savePrompt() {
-            if (!this.content.trim()) {
-                this.error = window.MESSAGES.VALIDATION.PROMPT_CONTENT_REQUIRED;
-                return;
-            }
-
-            this.isSaving = true;
-            this.error = null;
-
-            try {
-                const response = await fetch('/api/evaluation/prompts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': window.CSRF_TOKEN
-                    },
-                    body: JSON.stringify({
-                        document_type: this.documentType,
-                        content: this.content
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    window.location.href = '/evaluation-prompts?saved=1';
-                } else {
-                    this.error = data.message || window.MESSAGES.ERROR.EVALUATION_PROMPT_SAVE_FAILED;
-                }
-            } catch (e) {
-                this.error = window.MESSAGES.ERROR.API_ERROR;
-            } finally {
-                this.isSaving = false;
-            }
-        }
-    };
-}
-</script>
 {% endblock %}

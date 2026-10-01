@@ -2,11 +2,14 @@
 import hashlib
 import hmac
 import time
-from unittest.mock import patch
 
 from fastapi import status
 
-from tests.integration.conftest import INTEGRATION_CSRF_SECRET
+from tests.integration.conftest import (
+    INTEGRATION_CSRF_SECRET,
+    last_event,
+    patch_summary_client,
+)
 
 _VALID_MEDICAL_TEXT = (
     "患者は60歳男性。2型糖尿病にて長期加療中。"
@@ -14,7 +17,7 @@ _VALID_MEDICAL_TEXT = (
 )
 
 _STATE_CHANGING_POSTS = [
-    ("/api/summary/generate", {
+    ("/api/summary/generate-stream", {
         "medical_text": _VALID_MEDICAL_TEXT,
         "model": "Claude",
         "model_explicitly_selected": True,
@@ -38,7 +41,7 @@ class TestCSRFProtection:
     ):
         """CSRFトークンなしのPOSTは401を返す"""
         response = integration_client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={"medical_text": _VALID_MEDICAL_TEXT},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -48,7 +51,7 @@ class TestCSRFProtection:
     ):
         """不正なCSRFトークンは403を返す"""
         response = integration_client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={"medical_text": _VALID_MEDICAL_TEXT},
             headers={"X-CSRF-Token": "totally-invalid-token"},
         )
@@ -79,7 +82,7 @@ class TestCSRFProtection:
         expired_token = f"{old_timestamp}.{signature}"
 
         response = integration_client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={"medical_text": _VALID_MEDICAL_TEXT},
             headers={"X-CSRF-Token": expired_token},
         )
@@ -110,12 +113,9 @@ class TestCSRFProtection:
         self, integration_client, db_session, csrf_headers
     ):
         """有効なCSRFトークンを持つリクエストは許可される"""
-        with patch(
-            "app.services.summary_service.generate_summary_with_provider",
-            return_value=("生成テキスト", 100, 50),
-        ):
+        with patch_summary_client():
             response = integration_client.post(
-                "/api/summary/generate",
+                "/api/summary/generate-stream",
                 json={
                     "medical_text": _VALID_MEDICAL_TEXT,
                     "model": "Claude",
@@ -143,12 +143,9 @@ class TestSecurityHeaders:
         self, integration_client, db_session, csrf_headers
     ):
         """POSTレスポンスにもセキュリティヘッダーが付与される"""
-        with patch(
-            "app.services.summary_service.generate_summary_with_provider",
-            return_value=("テキスト", 100, 50),
-        ):
+        with patch_summary_client():
             response = integration_client.post(
-                "/api/summary/generate",
+                "/api/summary/generate-stream",
                 json={
                     "medical_text": _VALID_MEDICAL_TEXT,
                     "model": "Claude",
@@ -179,18 +176,9 @@ class TestXSSProtection:
             "<script>alert('xss')</script>"
             "糖尿病にて長期加療中。血糖値コントロール不良の状態が続いている。"
         )
-        captured: dict = {}
-
-        def capture_generate(**kwargs):
-            captured["medical_text"] = kwargs.get("medical_text", "")
-            return "生成テキスト", 100, 50
-
-        with patch(
-            "app.services.summary_service.generate_summary_with_provider",
-            side_effect=capture_generate,
-        ):
+        with patch_summary_client() as mock_create:
             response = integration_client.post(
-                "/api/summary/generate",
+                "/api/summary/generate-stream",
                 json={
                     "medical_text": text_with_xss,
                     "model": "Claude",
@@ -199,9 +187,9 @@ class TestXSSProtection:
                 headers=csrf_headers,
             )
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["success"] is True
-        assert "<script>" not in captured.get("medical_text", "")
+        assert last_event(response)["data"]["success"] is True
+        request = mock_create.return_value.generate_summary.call_args[0][0]
+        assert "<script>" not in request.medical_text
 
     def test_iframe_tags_sanitized(
         self, integration_client, db_session, csrf_headers
@@ -212,18 +200,9 @@ class TestXSSProtection:
             "<iframe src='http://evil.com'></iframe>"
             "詳細な病歴情報が続く。入院加療後に状態が改善した。"
         )
-        captured: dict = {}
-
-        def capture_generate(**kwargs):
-            captured["medical_text"] = kwargs.get("medical_text", "")
-            return "生成テキスト", 100, 50
-
-        with patch(
-            "app.services.summary_service.generate_summary_with_provider",
-            side_effect=capture_generate,
-        ):
+        with patch_summary_client() as mock_create:
             integration_client.post(
-                "/api/summary/generate",
+                "/api/summary/generate-stream",
                 json={
                     "medical_text": text_with_iframe,
                     "model": "Claude",
@@ -232,4 +211,5 @@ class TestXSSProtection:
                 headers=csrf_headers,
             )
 
-        assert "<iframe" not in captured.get("medical_text", "")
+        request = mock_create.return_value.generate_summary.call_args[0][0]
+        assert "<iframe" not in request.medical_text

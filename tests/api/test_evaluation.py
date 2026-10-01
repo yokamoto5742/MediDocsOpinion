@@ -4,33 +4,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import status
 
-from app.schemas.evaluation import EvaluationResponse
-
-
-@pytest.fixture
-def mock_evaluation_result_success():
-    """成功時のEvaluationResponse"""
-    return EvaluationResponse(
-        success=True,
-        evaluation_result="評価結果: 良好です",
-        input_tokens=1000,
-        output_tokens=500,
-        processing_time=2.5,
-    )
-
-
-@pytest.fixture
-def mock_evaluation_result_failure():
-    """失敗時のEvaluationResponse"""
-    return EvaluationResponse(
-        success=False,
-        evaluation_result="",
-        input_tokens=0,
-        output_tokens=0,
-        processing_time=0.0,
-        error_message="評価対象の出力がありません",
-    )
-
 
 @pytest.fixture
 def mock_evaluation_prompt():
@@ -43,102 +16,6 @@ def mock_evaluation_prompt():
     prompt.created_at = datetime(2025, 1, 1, 12)
     prompt.updated_at = datetime(2025, 1, 2, 12)
     return prompt
-
-
-def test_evaluate_output_success(
-    client, test_db, csrf_headers, mock_evaluation_result_success
-):
-    """評価実行API - 正常系"""
-    with patch(
-        "app.api.evaluation.evaluation_service.execute_evaluation"
-    ) as mock_execute:
-        mock_execute.return_value = mock_evaluation_result_success
-
-        payload = {
-            "document_type": "他院への紹介",
-            "input_text": "患者は60歳男性。2型糖尿病にて加療中。",
-            "current_prescription": "メトホルミン500mg",
-            "additional_info": "HbA1c 7.5%",
-            "output_summary": "主病名: 糖尿病\n治療経過: インスリン治療中",
-        }
-
-        response = client.post(
-            "/api/evaluation/evaluate", json=payload, headers=csrf_headers
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is True
-        assert data["evaluation_result"] == "評価結果: 良好です"
-        assert data["input_tokens"] == 1000
-        assert data["output_tokens"] == 500
-        assert data["processing_time"] == 2.5
-        assert data["error_message"] is None
-
-        mock_execute.assert_called_once()
-
-
-def test_evaluate_output_no_output_error(
-    client, test_db, csrf_headers, mock_evaluation_result_failure
-):
-    """評価実行API - 出力なしエラー"""
-    with patch(
-        "app.api.evaluation.evaluation_service.execute_evaluation"
-    ) as mock_execute:
-        mock_execute.return_value = mock_evaluation_result_failure
-
-        payload = {
-            "document_type": "他院への紹介",
-            "input_text": "患者情報",
-            "current_prescription": "",
-            "additional_info": "",
-            "output_summary": "",
-        }
-
-        response = client.post(
-            "/api/evaluation/evaluate", json=payload, headers=csrf_headers
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is False
-        assert data["error_message"] == "評価対象の出力がありません"
-        assert data["input_tokens"] == 0
-        assert data["output_tokens"] == 0
-
-
-def test_evaluate_output_model_missing_error(client, test_db, csrf_headers):
-    """評価実行API - モデル未設定エラー"""
-    error_result = EvaluationResponse(
-        success=False,
-        evaluation_result="",
-        input_tokens=0,
-        output_tokens=0,
-        processing_time=0.0,
-        error_message="EVALUATION_MODEL環境変数が設定されていません",
-    )
-
-    with patch(
-        "app.api.evaluation.evaluation_service.execute_evaluation"
-    ) as mock_execute:
-        mock_execute.return_value = error_result
-
-        payload = {
-            "document_type": "他院への紹介",
-            "input_text": "患者情報",
-            "current_prescription": "",
-            "additional_info": "",
-            "output_summary": "出力内容",
-        }
-
-        response = client.post(
-            "/api/evaluation/evaluate", json=payload, headers=csrf_headers
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
-        assert data["success"] is False
-        assert "EVALUATION_MODEL" in data["error_message"]
 
 
 def test_get_all_evaluation_prompts(client, test_db, mock_evaluation_prompt):
@@ -317,7 +194,7 @@ def test_evaluate_output_missing_required_field(client, test_db, csrf_headers):
     }
 
     response = client.post(
-        "/api/evaluation/evaluate", json=payload, headers=csrf_headers
+        "/api/evaluation/evaluate-stream", json=payload, headers=csrf_headers
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -390,3 +267,19 @@ def test_evaluate_output_stream_error(client, test_db, csrf_headers):
 
         assert response.status_code == status.HTTP_200_OK
         assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+
+
+def test_non_streaming_endpoint_is_removed(client, test_db, csrf_headers):
+    """非ストリーミングの評価APIは廃止済み"""
+    payload = {
+        "document_type": "主治医意見書",
+        "input_text": "患者情報",
+        "output_summary": "出力内容",
+    }
+
+    response = client.post("/api/evaluation/evaluate", json=payload, headers=csrf_headers)
+
+    assert response.status_code in (
+        status.HTTP_404_NOT_FOUND,
+        status.HTTP_405_METHOD_NOT_ALLOWED,
+    )

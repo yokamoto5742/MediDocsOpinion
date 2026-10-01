@@ -1,11 +1,9 @@
+import { errorMessageOf, fetchDoctors, getHeaders, postJson, readSSE } from './api';
 import type {
     Settings,
-    FormData,
+    InputForm,
     GenerationResult,
     EvaluationResult,
-    SummaryResponse,
-    EvaluationResponse,
-    DoctorsResponse,
     SelectedModelResponse,
     SSECompleteEvent,
     SSEErrorEvent,
@@ -17,7 +15,7 @@ type ScreenType = 'input' | 'output' | 'evaluation';
 interface AppState {
     settings: Settings;
     doctors: string[];
-    form: FormData;
+    form: InputForm;
     result: GenerationResult;
     isGenerating: boolean;
     elapsedTime: number;
@@ -29,43 +27,39 @@ interface AppState {
     currentScreen: ScreenType;
     evaluationResult: EvaluationResult;
     isEvaluating: boolean;
-    evaluationElapsedTime: number;
-    evaluationTimerInterval: ReturnType<typeof setInterval> | null;
     refinement: { previousSummary: string; evaluationFeedback: string };
     init(): Promise<void>;
     updateDoctors(): Promise<void>;
+    updateSelectedModel(): Promise<void>;
     startTimer(): void;
     stopTimer(): void;
+    runStream(url: string, body: Record<string, unknown>, onComplete: (data: unknown) => void): Promise<void>;
     buildGenerateRequestBody(): Record<string, unknown>;
     generateSummary(): Promise<void>;
     regenerateWithFeedback(): Promise<void>;
-    processSSEStream(response: Response): Promise<void>;
-    handleSSEEvent(eventText: string): void;
-    generateSummaryFallback(): Promise<void>;
     clearForm(): void;
     backToInput(): void;
     backToOutput(): void;
     showEvaluation(): void;
-    startEvaluationTimer(): void;
-    stopEvaluationTimer(): void;
     evaluateOutput(): Promise<void>;
-    processEvaluationSSEStream(response: Response): Promise<void>;
-    handleEvaluationSSEEvent(eventText: string): void;
-    evaluateOutputFallback(): Promise<void>;
     copyToClipboard(text: string): Promise<void>;
     getCurrentTabContent(): string;
     copyCurrentTab(): void;
-    isActiveTab(index: number): boolean;
     getTabClass(index: number): string;
 }
 
-// APIリクエスト用のヘッダーを取得
-function getHeaders(additionalHeaders: Record<string, string> = {}): Record<string, string> {
-    const headers: Record<string, string> = { ...additionalHeaders };
-    if (window.CSRF_TOKEN) {
-        headers['X-CSRF-Token'] = window.CSRF_TOKEN;
-    }
-    return headers;
+function emptyResult(): GenerationResult {
+    return {
+        outputSummary: '',
+        parsedSummary: {},
+        processingTime: null,
+        modelUsed: '',
+        modelSwitched: false
+    };
+}
+
+function emptyEvaluation(): EvaluationResult {
+    return { result: '', processingTime: null };
 }
 
 export function appState(): AppState {
@@ -74,7 +68,7 @@ export function appState(): AppState {
         settings: {
             department: 'default',
             doctor: 'default',
-            documentType: (window as any).DOCUMENT_TYPES?.[0],
+            documentType: window.DOCUMENT_TYPES[0],
             model: 'Claude'
         },
         doctors: ['default'],
@@ -87,32 +81,21 @@ export function appState(): AppState {
         },
 
         // Result
-        result: {
-            outputSummary: '',
-            parsedSummary: {},
-            processingTime: null,
-            modelUsed: '',
-            modelSwitched: false
-        },
+        result: emptyResult(),
 
-        // UI state
+        // UI state（生成と評価は同時に走らないため、タイマーは共有する）
         isGenerating: false,
         elapsedTime: 0,
         timerInterval: null,
         showCopySuccess: false,
         error: null,
         activeTab: 0,
-        tabs: window.TAB_NAMES ?? ['全文'],
+        tabs: window.TAB_NAMES,
         currentScreen: 'input',
 
         // Evaluation state
-        evaluationResult: {
-            result: '',
-            processingTime: null
-        },
+        evaluationResult: emptyEvaluation(),
         isEvaluating: false,
-        evaluationElapsedTime: 0,
-        evaluationTimerInterval: null,
 
         // 指摘を反映した再生成用コンテキスト
         refinement: {
@@ -127,15 +110,7 @@ export function appState(): AppState {
 
         async updateDoctors() {
             try {
-                const response = await fetch(`/api/settings/doctors/${this.settings.department}`, {
-                    headers: getHeaders()
-                });
-                if (!response.ok) {
-                    console.error('医師リストの取得に失敗しました:', response.status, response.statusText);
-                    return;
-                }
-                const data = await response.json() as DoctorsResponse;
-                this.doctors = data.doctors;
+                this.doctors = await fetchDoctors(this.settings.department);
                 if (!this.doctors.includes(this.settings.doctor)) {
                     this.settings.doctor = this.doctors[0];
                 }
@@ -181,6 +156,34 @@ export function appState(): AppState {
             }
         },
 
+        // SSEエンドポイントを呼び出し、complete イベントで onComplete を実行する
+        async runStream(url: string, body: Record<string, unknown>, onComplete: (data: unknown) => void) {
+            this.error = null;
+            this.startTimer();
+
+            try {
+                const response = await postJson(url, body);
+                if (!response.ok) {
+                    this.error = await errorMessageOf(response, window.MESSAGES.ERROR.API_ERROR);
+                    return;
+                }
+
+                await readSSE(response, (eventType, data) => {
+                    // progress はハートビートのため何もしない
+                    if (eventType === 'complete') {
+                        onComplete(data);
+                    } else if (eventType === 'error') {
+                        this.error = (data as SSEErrorEvent).error_message || window.MESSAGES.ERROR.GENERIC_ERROR;
+                    }
+                });
+            } catch (e) {
+                console.error('SSEストリーミング中にエラーが発生:', e);
+                this.error = window.MESSAGES.ERROR.API_ERROR;
+            } finally {
+                this.stopTimer();
+            }
+        },
+
         buildGenerateRequestBody(): Record<string, unknown> {
             return {
                 previous_text: this.form.previousText,
@@ -198,127 +201,33 @@ export function appState(): AppState {
 
         async generateSummary() {
             if (!this.form.medicalText.trim()) {
-                this.error = window.MESSAGES?.VALIDATION?.NO_INPUT ?? 'カルテ情報を入力してください';
+                this.error = window.MESSAGES.VALIDATION.NO_INPUT;
                 return;
             }
 
             this.isGenerating = true;
-            this.error = null;
-            this.startTimer();
-
             try {
-                const response = await fetch('/api/summary/generate-stream', {
-                    method: 'POST',
-                    headers: getHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify(this.buildGenerateRequestBody())
+                await this.runStream('/api/summary/generate-stream', this.buildGenerateRequestBody(), (data) => {
+                    const complete = data as SSECompleteEvent;
+                    this.result = {
+                        outputSummary: complete.output_summary || '',
+                        parsedSummary: complete.parsed_summary || {},
+                        processingTime: complete.processing_time || null,
+                        modelUsed: complete.model_used || '',
+                        modelSwitched: complete.model_switched || false
+                    };
+                    this.evaluationResult = emptyEvaluation();
+                    this.activeTab = 0;
+                    this.currentScreen = 'output';
                 });
-
-                if (!response.ok) {
-                    console.warn(`SSEストリーミングエンドポイントが利用不可 (status: ${response.status})、非ストリーミングにフォールバック`);
-                    await this.generateSummaryFallback();
-                    return;
-                }
-
-                await this.processSSEStream(response);
-
-            } catch (e) {
-                console.error('SSEストリーミング中にエラーが発生:', e);
-                // ネットワークエラー時は非ストリーミングにフォールバック
-                try {
-                    await this.generateSummaryFallback();
-                } catch (fallbackError) {
-                    console.error('フォールバックも失敗:', fallbackError);
-                    this.error = window.MESSAGES?.ERROR?.API_ERROR ?? 'API エラーが発生しました';
-                }
             } finally {
-                this.stopTimer();
                 this.isGenerating = false;
-            }
-        },
-
-        async processSSEStream(response: Response) {
-            if (!response.body) {
-                throw new Error(window.MESSAGES?.ERROR?.RESPONSE_BODY_EMPTY ?? 'レスポンスボディが空です');
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const events = buffer.split('\n\n');
-                    buffer = events.pop() || '';
-
-                    for (const eventText of events) {
-                        if (!eventText.trim()) continue;
-                        this.handleSSEEvent(eventText);
-                    }
-                }
-
-                // 残りのバッファを処理
-                if (buffer.trim()) {
-                    this.handleSSEEvent(buffer);
-                }
-            } catch (e) {
-                console.error('SSEストリーム読み取り中にエラーが発生:', e);
-                throw e;
-            } finally {
-                reader.releaseLock();
-            }
-        },
-
-        handleSSEEvent(eventText: string) {
-            const lines = eventText.split('\n');
-            let eventType = '';
-            let data = '';
-
-            for (const line of lines) {
-                if (line.startsWith('event: ')) {
-                    eventType = line.slice(7).trim();
-                } else if (line.startsWith('data: ')) {
-                    data = line.slice(6);
-                }
-            }
-
-            if (!eventType || !data) return;
-
-            const parsed = JSON.parse(data);
-
-            switch (eventType) {
-                case 'progress':
-                    // ハートビート - UIのステータス表示を更新可能
-                    break;
-                case 'complete':
-                    if ((parsed as SSECompleteEvent).success) {
-                        const completeData = parsed as SSECompleteEvent;
-                        this.result = {
-                            outputSummary: completeData.output_summary || '',
-                            parsedSummary: completeData.parsed_summary || {},
-                            processingTime: completeData.processing_time || null,
-                            modelUsed: completeData.model_used || '',
-                            modelSwitched: completeData.model_switched || false
-                        };
-                        this.evaluationResult = { result: '', processingTime: null };
-                        this.activeTab = 0;
-                        this.currentScreen = 'output';
-                    } else {
-                        this.error = (parsed as SSEErrorEvent).error_message || (window.MESSAGES?.ERROR?.GENERIC_ERROR ?? 'エラーが発生しました');
-                    }
-                    break;
-                case 'error':
-                    this.error = (parsed as SSEErrorEvent).error_message || (window.MESSAGES?.ERROR?.GENERIC_ERROR ?? 'エラーが発生しました');
-                    break;
             }
         },
 
         async regenerateWithFeedback() {
             if (!this.result.outputSummary || !this.evaluationResult.result) {
-                this.error = window.MESSAGES?.VALIDATION?.EVALUATION_NO_OUTPUT ?? '評価対象の出力がありません';
+                this.error = window.MESSAGES.VALIDATION.EVALUATION_NO_OUTPUT;
                 return;
             }
 
@@ -333,55 +242,20 @@ export function appState(): AppState {
             }
         },
 
-        async generateSummaryFallback() {
-            const response = await fetch('/api/summary/generate', {
-                method: 'POST',
-                headers: getHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify(this.buildGenerateRequestBody())
-            });
-
-            const data = await response.json() as SummaryResponse;
-
-            if (data.success) {
-                this.result = {
-                    outputSummary: data.output_summary || '',
-                    parsedSummary: data.parsed_summary || {},
-                    processingTime: data.processing_time || null,
-                    modelUsed: data.model_used || '',
-                    modelSwitched: data.model_switched || false
-                };
-                this.evaluationResult = { result: '', processingTime: null };
-                this.activeTab = 0;
-                this.currentScreen = 'output';
-            } else {
-                this.error = data.error_message || (window.MESSAGES?.ERROR?.GENERIC_ERROR ?? 'エラーが発生しました');
-            }
-        },
-
         clearForm() {
             this.form = {
                 previousText: '',
                 medicalText: '',
                 additionalInfo: ''
             };
-            this.result = {
-                outputSummary: '',
-                parsedSummary: {},
-                processingTime: null,
-                modelUsed: '',
-                modelSwitched: false
-            };
-            this.evaluationResult = {
-                result: '',
-                processingTime: null
-            };
+            this.result = emptyResult();
+            this.evaluationResult = emptyEvaluation();
             this.error = null;
         },
 
         backToInput() {
             this.clearForm();
             this.currentScreen = 'input';
-            this.error = null;
         },
 
         backToOutput() {
@@ -392,170 +266,37 @@ export function appState(): AppState {
             this.currentScreen = 'evaluation';
         },
 
-        startEvaluationTimer() {
-            this.evaluationElapsedTime = 0;
-            this.evaluationTimerInterval = setInterval(() => {
-                this.evaluationElapsedTime++;
-            }, 1000);
-        },
-
-        stopEvaluationTimer() {
-            if (this.evaluationTimerInterval !== null) {
-                clearInterval(this.evaluationTimerInterval);
-                this.evaluationTimerInterval = null;
-            }
-        },
-
         async evaluateOutput() {
             if (!this.result.outputSummary) {
-                this.error = window.MESSAGES?.VALIDATION?.EVALUATION_NO_OUTPUT ?? '評価対象の出力がありません';
+                this.error = window.MESSAGES.VALIDATION.EVALUATION_NO_OUTPUT;
                 return;
             }
 
             // 既に評価結果がある場合は確認ダイアログを表示
-            if (this.evaluationResult.result) {
-                if (!confirm(window.MESSAGES?.CONFIRM?.RE_EVALUATE ?? '前回の評価をクリアして再評価しますか？')) {
-                    return;
-                }
+            if (this.evaluationResult.result && !confirm(window.MESSAGES.CONFIRM.RE_EVALUATE)) {
+                return;
             }
+
+            const body = {
+                document_type: this.settings.documentType,
+                input_text: this.form.medicalText,
+                previous_text: this.form.previousText,
+                additional_info: this.form.additionalInfo,
+                output_summary: this.result.outputSummary
+            };
 
             this.isEvaluating = true;
-            this.error = null;
-            this.startEvaluationTimer();
-
             try {
-                const response = await fetch('/api/evaluation/evaluate-stream', {
-                    method: 'POST',
-                    headers: getHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({
-                        document_type: this.settings.documentType,
-                        input_text: this.form.medicalText,
-                        previous_text: this.form.previousText,
-                        additional_info: this.form.additionalInfo,
-                        output_summary: this.result.outputSummary
-                    })
+                await this.runStream('/api/evaluation/evaluate-stream', body, (data) => {
+                    const complete = data as SSEEvaluationCompleteEvent;
+                    this.evaluationResult = {
+                        result: complete.evaluation_result || '',
+                        processingTime: complete.processing_time || null
+                    };
+                    this.currentScreen = 'evaluation';
                 });
-
-                if (!response.ok) {
-                    console.warn(`SSEストリーミングエンドポイントが利用不可 (status: ${response.status})、非ストリーミングにフォールバック`);
-                    await this.evaluateOutputFallback();
-                    return;
-                }
-
-                await this.processEvaluationSSEStream(response);
-
-            } catch (e) {
-                console.error('SSEストリーミング中にエラーが発生:', e);
-                try {
-                    await this.evaluateOutputFallback();
-                } catch (fallbackError) {
-                    console.error('フォールバックも失敗:', fallbackError);
-                    this.error = window.MESSAGES?.ERROR?.API_ERROR ?? 'API エラーが発生しました';
-                }
             } finally {
-                this.stopEvaluationTimer();
                 this.isEvaluating = false;
-            }
-        },
-
-        async processEvaluationSSEStream(response: Response) {
-            if (!response.body) {
-                throw new Error(window.MESSAGES?.ERROR?.RESPONSE_BODY_EMPTY ?? 'レスポンスボディが空です');
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const events = buffer.split('\n\n');
-                    buffer = events.pop() || '';
-
-                    for (const eventText of events) {
-                        if (!eventText.trim()) continue;
-                        this.handleEvaluationSSEEvent(eventText);
-                    }
-                }
-
-                // 残りのバッファを処理
-                if (buffer.trim()) {
-                    this.handleEvaluationSSEEvent(buffer);
-                }
-            } catch (e) {
-                console.error('SSEストリーム読み取り中にエラーが発生:', e);
-                throw e;
-            } finally {
-                reader.releaseLock();
-            }
-        },
-
-        handleEvaluationSSEEvent(eventText: string) {
-            const lines = eventText.split('\n');
-            let eventType = '';
-            let data = '';
-
-            for (const line of lines) {
-                if (line.startsWith('event: ')) {
-                    eventType = line.slice(7).trim();
-                } else if (line.startsWith('data: ')) {
-                    data = line.slice(6);
-                }
-            }
-
-            if (!eventType || !data) return;
-
-            const parsed = JSON.parse(data);
-
-            switch (eventType) {
-                case 'progress':
-                    // ハートビート - UIのステータス表示を更新可能
-                    break;
-                case 'complete':
-                    if ((parsed as SSEEvaluationCompleteEvent).success) {
-                        const completeData = parsed as SSEEvaluationCompleteEvent;
-                        this.evaluationResult = {
-                            result: completeData.evaluation_result || '',
-                            processingTime: completeData.processing_time || null
-                        };
-                        this.currentScreen = 'evaluation';
-                    } else {
-                        this.error = (parsed as SSEErrorEvent).error_message || (window.MESSAGES?.ERROR?.GENERIC_ERROR ?? 'エラーが発生しました');
-                    }
-                    break;
-                case 'error':
-                    this.error = (parsed as SSEErrorEvent).error_message || (window.MESSAGES?.ERROR?.GENERIC_ERROR ?? 'エラーが発生しました');
-                    break;
-            }
-        },
-
-        async evaluateOutputFallback() {
-            const response = await fetch('/api/evaluation/evaluate', {
-                method: 'POST',
-                headers: getHeaders({ 'Content-Type': 'application/json' }),
-                body: JSON.stringify({
-                    document_type: this.settings.documentType,
-                    input_text: this.form.medicalText,
-                    previous_text: this.form.previousText,
-                    additional_info: this.form.additionalInfo,
-                    output_summary: this.result.outputSummary
-                })
-            });
-
-            const data = await response.json() as EvaluationResponse;
-
-            if (data.success) {
-                this.evaluationResult = {
-                    result: data.evaluation_result || '',
-                    processingTime: data.processing_time || null
-                };
-                this.currentScreen = 'evaluation';
-            } else {
-                this.error = data.error_message || (window.MESSAGES?.ERROR?.EVALUATION_ERROR ?? '評価中にエラーが発生しました');
             }
         },
 
@@ -567,7 +308,7 @@ export function appState(): AppState {
                     this.showCopySuccess = false;
                 }, 2000);
             } catch (e) {
-                this.error = window.MESSAGES?.ERROR?.COPY_FAILED ?? 'テキストのコピーに失敗しました';
+                this.error = window.MESSAGES.ERROR.COPY_FAILED;
             }
         },
 
@@ -583,12 +324,8 @@ export function appState(): AppState {
             this.copyToClipboard(this.getCurrentTabContent());
         },
 
-        isActiveTab(index: number): boolean {
-            return this.activeTab === index;
-        },
-
         getTabClass(index: number): string {
-            return this.isActiveTab(index)
+            return this.activeTab === index
                 ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                 : 'border-transparent text-white hover:text-gray-700 dark:hover:text-gray-300';
         }

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from app.core.constants import get_message
+from app.api.dependencies import get_client_ip
+from app.core.constants import MESSAGES
 from app.core.database import get_db
 from app.schemas.evaluation import (
     EvaluationPromptListResponse,
@@ -10,76 +11,31 @@ from app.schemas.evaluation import (
     EvaluationPromptResponse,
     EvaluationPromptSaveResponse,
     EvaluationRequest,
-    EvaluationResponse,
 )
-from app.services import evaluation_prompt_service, evaluation_service
+from app.services import evaluation_prompt_service
 from app.services.evaluation_service import execute_evaluation_stream
+from app.services.sse_helpers import sse_response
 from app.utils.audit_logger import log_audit_event
 
 # 公開ルーター(読み取り専用、CSRF保護なし)
 public_router = APIRouter(prefix="/evaluation", tags=["evaluation"])
 
-# 管理用ルーター(変更操作、CSRF保護あり)
+# CSRF保護ありのルーター(UI経由の操作のみ許可)
 router = APIRouter(prefix="/evaluation", tags=["evaluation"])
 
-# 保護されたAPIルーター(認証必須)
-protected_router = APIRouter(prefix="/evaluation", tags=["evaluation"])
 
-
-@protected_router.post("/evaluate", response_model=EvaluationResponse)
-def evaluate_output(http_request: Request, request: EvaluationRequest):
-    """出力評価API"""
-    user_ip = http_request.client.host if http_request.client else None
-    return evaluation_service.execute_evaluation(
-        document_type=request.document_type,
-        input_text=request.input_text,
-        previous_text=request.previous_text,
-        additional_info=request.additional_info,
-        output_summary=request.output_summary,
-        user_ip=user_ip,
-    )
-
-
-@protected_router.post("/evaluate-stream")
-async def evaluate_output_stream(http_request: Request, request: EvaluationRequest):
+@router.post("/evaluate-stream")
+async def evaluate_output_stream(
+    request: EvaluationRequest, user_ip: str | None = Depends(get_client_ip)
+) -> StreamingResponse:
     """SSEストリーミング出力評価API"""
-    user_ip = http_request.client.host if http_request.client else None
-    event_generator = execute_evaluation_stream(
-        document_type=request.document_type,
-        input_text=request.input_text,
-        previous_text=request.previous_text,
-        additional_info=request.additional_info,
-        output_summary=request.output_summary,
-        user_ip=user_ip,
-    )
-    return StreamingResponse(
-        event_generator,
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    return sse_response(execute_evaluation_stream(request, user_ip))
 
 
 @public_router.get("/prompts", response_model=EvaluationPromptListResponse)
 def get_all_evaluation_prompts(db: Session = Depends(get_db)):
     """全ての評価プロンプトを取得"""
-    prompts = evaluation_prompt_service.get_all_evaluation_prompts(db)
-    return EvaluationPromptListResponse(
-        prompts=[
-            EvaluationPromptResponse(
-                id=p.id,
-                document_type=p.document_type,
-                content=p.content,
-                is_active=p.is_active,
-                created_at=p.created_at,
-                updated_at=p.updated_at,
-            )
-            for p in prompts
-        ]
-    )
+    return {"prompts": evaluation_prompt_service.get_all_evaluation_prompts(db)}
 
 
 @public_router.get("/prompts/{document_type}", response_model=EvaluationPromptResponse)
@@ -90,14 +46,8 @@ def get_evaluation_prompt(
     """評価プロンプトを取得"""
     prompt = evaluation_prompt_service.get_evaluation_prompt(db, document_type)
     if prompt:
-        return EvaluationPromptResponse(
-            id=prompt.id,
-            document_type=prompt.document_type,
-            content=prompt.content,
-            is_active=prompt.is_active,
-            created_at=prompt.created_at,
-            updated_at=prompt.updated_at,
-        )
+        return prompt
+    # 未設定の文書タイプは空の内容で返す（編集画面の新規作成用）
     return EvaluationPromptResponse(
         document_type=document_type,
         content=None,
@@ -107,19 +57,18 @@ def get_evaluation_prompt(
 
 @router.post("/prompts", response_model=EvaluationPromptSaveResponse)
 def save_evaluation_prompt(
-    http_request: Request,
     request: EvaluationPromptRequest,
+    user_ip: str | None = Depends(get_client_ip),
     db: Session = Depends(get_db)
 ):
     """評価プロンプトを保存"""
-    user_ip = http_request.client.host if http_request.client else None
     success, message = evaluation_prompt_service.create_or_update_evaluation_prompt(
         db, request.document_type, request.content
     )
     if success:
         db.commit()
         log_audit_event(
-            event_type=get_message("AUDIT", "EVALUATION_PROMPT_SAVED"),
+            event_type=MESSAGES["AUDIT"]["EVALUATION_PROMPT_SAVED"],
             user_ip=user_ip,
             document_type=request.document_type,
         )
@@ -132,17 +81,16 @@ def save_evaluation_prompt(
 
 @router.delete("/prompts/{document_type}", response_model=EvaluationPromptSaveResponse)
 def delete_evaluation_prompt(
-    http_request: Request,
     document_type: str,
+    user_ip: str | None = Depends(get_client_ip),
     db: Session = Depends(get_db)
 ):
     """評価プロンプトを削除"""
-    user_ip = http_request.client.host if http_request.client else None
     success, message = evaluation_prompt_service.delete_evaluation_prompt(db, document_type)
     if success:
         db.commit()
         log_audit_event(
-            event_type=get_message("AUDIT", "EVALUATION_PROMPT_DELETED"),
+            event_type=MESSAGES["AUDIT"]["EVALUATION_PROMPT_DELETED"],
             user_ip=user_ip,
             document_type=document_type,
         )

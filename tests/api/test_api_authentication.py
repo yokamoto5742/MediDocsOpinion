@@ -16,7 +16,7 @@ class TestCsrfAuthentication:
     def test_protected_endpoint_requires_csrf_token(self, client: TestClient):
         """保護されたエンドポイントはCSRFトークンなしで401エラー"""
         response = client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={
                 "medical_text": "test",
                 "department": "内科",
@@ -29,7 +29,7 @@ class TestCsrfAuthentication:
     def test_protected_endpoint_with_invalid_token(self, client: TestClient):
         """無効なCSRFトークンで403エラー"""
         response = client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={
                 "medical_text": "test",
                 "department": "内科",
@@ -43,7 +43,7 @@ class TestCsrfAuthentication:
     def test_evaluation_endpoint_requires_csrf_token(self, client: TestClient):
         """評価エンドポイントもCSRFトークン必須"""
         response = client.post(
-            "/api/evaluation/evaluate",
+            "/api/evaluation/evaluate-stream",
             json={
                 "document_type": "診療情報提供書",
                 "input_text": "test",
@@ -106,7 +106,7 @@ class TestCsrfAuthentication:
         expired_token = f"{old_timestamp}.{signature}"
 
         response = client.post(
-            "/api/summary/generate",
+            "/api/summary/generate-stream",
             json={"medical_text": "test", "department": "内科", "document_type": "退院時サマリ"},
             headers={"X-CSRF-Token": expired_token},
         )

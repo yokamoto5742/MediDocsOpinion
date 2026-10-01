@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.core.constants import MESSAGES
+from app.core.constants import MESSAGES, get_message
 from app.models.evaluation_prompt import EvaluationPrompt
 
 
@@ -8,7 +8,7 @@ def get_evaluation_prompt(db: Session, document_type: str) -> EvaluationPrompt |
     """評価プロンプトを取得"""
     return db.query(EvaluationPrompt).filter(
         EvaluationPrompt.document_type == document_type,
-        EvaluationPrompt.is_active == True
+        EvaluationPrompt.is_active.is_(True)
     ).first()
 
 
@@ -31,8 +31,8 @@ def create_or_update_evaluation_prompt(
     ).first()
 
     if existing:
-        setattr(existing, 'content', content)
-        setattr(existing, 'is_active', True)
+        existing.content = content
+        existing.is_active = True
         message = MESSAGES["SUCCESS"]["EVALUATION_PROMPT_UPDATED"]
     else:
         new_prompt = EvaluationPrompt(
@@ -53,8 +53,8 @@ def delete_evaluation_prompt(db: Session, document_type: str) -> tuple[bool, str
     ).first()
 
     if not prompt:
-        return False, MESSAGES["ERROR"]["EVALUATION_PROMPT_NOT_FOUND"].format(
-            document_type=document_type
+        return False, get_message(
+            "ERROR", "EVALUATION_PROMPT_NOT_FOUND", document_type=document_type
         )
 
     db.delete(prompt)

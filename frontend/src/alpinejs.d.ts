@@ -1,6 +1,6 @@
 declare module 'alpinejs' {
     interface Alpine {
-        data(name: string, callback: () => any): void;
+        data(name: string, callback: (...args: any[]) => any): void;
         start(): void;
     }
 
