@@ -7,6 +7,36 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-02
+
+### 変更
+
+- **コード品質の向上**: 複数のモジュールを改善し、エラーハンドリングとテストケースを簡素化
+- **セクション検出パターンを統一**: 複数のパターン配列から単一の正規表現に統一（`SECTION_DETECTION_PATTERN`）
+- **フロントエンドを TypeScript 化**: HTML テンプレートの論理をフロントエンド側に移行し、保守性と拡張性を向上
+
+### 削除
+
+- **未使用のメッセージ定数を削除**: Bedrock、Cloudflare Gateway、Vertex AI に関連するエラーメッセージおよび設定メッセージを削除
+  - `BEDROCK_API_ERROR`、`BEDROCK_INIT_ERROR`、`CLAUDE_CLIENT_NOT_INITIALIZED`（エラーメッセージ）
+  - `CLOUDFLARE_GATEWAY_API_ERROR`、`CLOUDFLARE_GATEWAY_NOT_INITIALIZED`（エラーメッセージ）
+  - `GEMINI_CLIENT_NOT_INITIALIZED`、`MODEL_NAME_NOT_SPECIFIED`、`UNSUPPORTED_API_PROVIDER`（エラーメッセージ）
+  - `VERTEX_AI_API_ERROR`、`VERTEX_AI_CREDENTIALS_ERROR` 等複数の Vertex AI 関連エラーメッセージ
+  - `API_CREDENTIALS_MISSING`、`AWS_CREDENTIALS_MISSING` 等の認証情報関連の設定メッセージ
+  - `NO_DATA_FOUND`（統計情報ページの未使用メッセージ）
+  - `ANTHROPIC_MODEL_MISSING`（設定メッセージ）、`FIELD_REQUIRED`（入力検証メッセージ、`FRONTEND_MESSAGE_KEYS` のキーを含む）
+- **HTML テンプレートファイルを削除**: プロンプト管理ページとして以下を削除し、フロントエンド側に機能を統合
+  - `prompts.html`、`prompts_new.html`、`prompts_edit.html`
+  - `evaluation_prompts.html`、`evaluation_prompts_edit.html`
+- **不要なテストケースを削除**: 削除されたモジュール・機能に関連するテストを簡素化
+
+### 追加
+
+- **CSRF セキュリティメッセージを追加**: CSRF トークン検証機能を強化
+  - `CSRF_TOKEN_INVALID`、`CSRF_TOKEN_REQUIRED`（エラーメッセージ）
+  - `CSRF_SECRET_KEY_MISSING`（設定メッセージ）
+- **入力検証メッセージを追加**: 疑わしい入力パターンを検出するための `SUSPICIOUS_INPUT` メッセージ
+
 ## [1.2.0] - 2026-09-30
 
 ### 変更
@@ -75,7 +105,9 @@
 
 安定版初回リリース
 
-[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/yourusername/MediDocsOpinion/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/yourusername/MediDocsOpinion/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/yourusername/MediDocsOpinion/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/yourusername/MediDocsOpinion/compare/v1.0.2...v1.1.0

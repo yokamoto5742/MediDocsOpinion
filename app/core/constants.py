@@ -57,7 +57,7 @@ SECTION_DETECTION_PATTERN = r"^[【\[■●\s]*({sections})[】\]\s]*[:：]?\s*(
 
 # app/services/usage_service.py
 # 使用統計に記録するアプリ種別
-USAGE_APP_TYPE = "dischargesummary"
+USAGE_APP_TYPE = "opinion_letter"
 
 MESSAGES: dict[str, dict[str, str]] = {
     "ERROR": {
@@ -88,7 +88,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "USAGE_SAVE_FAILED": "使用統計の保存に失敗しました: {error}",
     },
     "CONFIG": {
-        "ANTHROPIC_MODEL_MISSING": "ANTHROPIC_MODELが設定されていません。環境変数を確認してください。",
         "CLAUDE_MODEL_NOT_SET": "Claudeモデルが設定されていません",
         "CSRF_SECRET_KEY_MISSING": "CSRF_SECRET_KEY環境変数が設定されていません。アプリケーションを起動できません。",
         "EVALUATION_MODEL_MISSING": "EVALUATION_MODEL環境変数が設定されていません",
@@ -105,7 +104,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "EVALUATION_NO_OUTPUT": "評価対象の出力がありません",
         "EVALUATION_PROMPT_CONTENT_REQUIRED": "評価プロンプトの内容を入力してください",
         "EVALUATION_PROMPT_NOT_SET": "{document_type}の評価プロンプトが設定されていません",
-        "FIELD_REQUIRED": "すべての項目を入力してください",
         "INPUT_TOO_LONG": "入力テキストが長すぎます",
         "INPUT_TOO_SHORT": "入力文字数が少なすぎます",
         "NO_INPUT": "カルテ情報を入力してください",
@@ -192,7 +190,6 @@ FRONTEND_MESSAGE_KEYS: dict[str, list[str]] = {
     "VALIDATION": [
         "ALL_REQUIRED_FIELDS",
         "EVALUATION_NO_OUTPUT",
-        "FIELD_REQUIRED",
         "NO_INPUT",
         "NO_PERSONAL_INFO",
         "PROMPT_CONTENT_REQUIRED",
