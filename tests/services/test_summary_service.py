@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app.core.constants import MESSAGES, ModelType
+from app.core.constants import MESSAGES, USAGE_APP_TYPE, ModelType
 from app.schemas.summary import SummaryRequest
 from app.services.model_selector import determine_model, get_provider_and_model
 from app.services.summary_service import (
@@ -276,7 +276,7 @@ class TestSaveUsage:
         assert added_usage.model == "Claude"
         assert added_usage.input_tokens == 1000
         assert added_usage.output_tokens == 500
-        assert added_usage.app_type == "dischargesummary"
+        assert added_usage.app_type == USAGE_APP_TYPE
         assert added_usage.processing_time == 2.5
 
     @patch("app.services.usage_service.get_db_session")

@@ -226,4 +226,4 @@ def test_get_selected_model_missing_parameters(client, test_db):
     """選択モデル取得 - パラメータ不足"""
     response = client.get("/api/settings/selected-model")
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

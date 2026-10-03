@@ -197,7 +197,7 @@ def test_evaluate_output_missing_required_field(client, test_db, csrf_headers):
         "/api/evaluation/evaluate-stream", json=payload, headers=csrf_headers
     )
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     # 検証に失敗したフィールド名はクライアントに返さない
     assert "input_text" not in response.text
 
@@ -213,7 +213,7 @@ def test_save_evaluation_prompt_missing_required_field(client, test_db, csrf_hea
         "/api/evaluation/prompts", json=payload, headers=csrf_headers
     )
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     # 検証に失敗したフィールド名はクライアントに返さない
     assert "content" not in response.text
 

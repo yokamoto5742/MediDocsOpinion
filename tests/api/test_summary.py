@@ -66,7 +66,7 @@ def test_generate_stream_missing_required_field(client, test_db, csrf_headers):
     """文書生成API - 必須フィールド欠落は 422 と定型メッセージ"""
     response = client.post(STREAM_URL, json={"department": "眼科"}, headers=csrf_headers)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert response.json() == {
         "success": False,
         "error_message": MESSAGES["ERROR"]["INPUT_ERROR"],
@@ -77,7 +77,7 @@ def test_generate_stream_empty_medical_text(client, test_db, csrf_headers):
     """文書生成API - 空のカルテ情報は 422"""
     response = client.post(STREAM_URL, json={"medical_text": ""}, headers=csrf_headers)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 def test_generate_stream_requires_csrf_token(client, test_db):

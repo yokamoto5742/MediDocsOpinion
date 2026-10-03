@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from app.core.constants import get_message
+from app.core.constants import USAGE_APP_TYPE, get_message
 from app.services.usage_service import DailyUsageSummary, check_daily_limit, get_daily_usage
 
 
@@ -154,7 +154,7 @@ class TestSaveUsage:
         assert added.input_tokens == 1000
         assert added.output_tokens == 500
         assert added.processing_time == 2.5
-        assert added.app_type == "dischargesummary"
+        assert added.app_type == USAGE_APP_TYPE
 
     @patch("app.services.usage_service.get_db_session")
     @patch("app.services.usage_service.logger.error")
